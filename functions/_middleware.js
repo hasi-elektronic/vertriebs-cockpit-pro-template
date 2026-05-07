@@ -782,7 +782,7 @@ export async function onRequest(context) {
     if (!env.KV) return jsonResponse({ error: 'KV not bound' }, 500);
     const leadId = scoreMatch[1];
     const body = await request.json().catch(() => ({}));
-    const PRODUKTE = ['ventilatoren','schallhauben','laufrad_wuchten','schweissbaugruppen','metalldrueckteile','industrielackierung','lohnfertigung_blech','nuten_fraesen_drehen','werkzeugschraenke'];
+    const PRODUKTE = ['produkt_a','produkt_b','produkt_c']; // TODO: Anpassen – siehe CONFIG.md
     const existing = await env.KV.get(`score:${leadId}`);
     let override = existing ? JSON.parse(existing) : { scores: {} };
     if (!override.scores) override.scores = {};
