@@ -607,6 +607,7 @@ td.score-cell { padding: 8px 4px; }
     <button class="csv-btn" id="csvBtn">CSV Export</button>
     <button class="csv-btn" id="addFirmaBtn" onclick="openAddFirma()" style="background:#16a34a;color:#fff;border-color:#16a34a">+ Firma</button>
     <button class="csv-btn" id="importBtn" onclick="openImportModal()" style="background:#0369a1;color:#fff;border-color:#0369a1">&#x2B06; Excel Import</button>
+    <button class="csv-btn" id="aiSearchBtn" onclick="openAiSearch()" style="background:#7c3aed;color:#fff;border-color:#7c3aed">&#x1F50D; KI-Suche</button>
   </div>
   <div class="filter-section">
     <div class="filter-group"><div class="filter-label">Beste Produktlinie</div><div class="chip-row" id="produkt-chips"></div></div>
@@ -2861,5 +2862,229 @@ async function startImport() {
   btn.disabled = false; btn.textContent = 'Import starten';
 }
 </script>
+
+<!-- ===== KI-PROSPECT SEARCH ===== -->
+<div id="aiSearchOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:500;align-items:center;justify-content:center;padding:16px" onclick="if(event.target.id==='aiSearchOverlay')closeAiSearch()">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:860px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.35)" onclick="event.stopPropagation()">
+    <div style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;padding:20px 26px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h2 style="margin:0;font-size:18px">&#x1F916; KI-Kundensuche</h2>
+        <div style="font-size:12px;opacity:.85;margin-top:3px">Claude sucht automatisch potenzielle Kunden im Web</div>
+      </div>
+      <button onclick="closeAiSearch()" style="background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px">&times;</button>
+    </div>
+
+    <!-- Search Form -->
+    <div id="ais-form" style="padding:24px">
+      <div style="display:grid;grid-template-columns:2fr 2fr 1fr;gap:14px;margin-bottom:16px">
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Branche / Industrie *</label>
+          <input id="ais-branche" type="text" placeholder="z.B. Maschinenbau, Bäckerei, IT-Dienstleister..." style="width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Region</label>
+          <input id="ais-region" type="text" placeholder="z.B. Baden-Württemberg, München, Ruhrgebiet..." value="Deutschland" style="width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:5px">Anzahl</label>
+          <select id="ais-count" style="width:100%;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff;box-sizing:border-box">
+            <option value="5">5 Firmen</option>
+            <option value="10" selected>10 Firmen</option>
+            <option value="15">15 Firmen</option>
+            <option value="20">20 Firmen</option>
+          </select>
+        </div>
+      </div>
+      <div id="ais-error" style="display:none;padding:10px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#dc2626;font-size:13px;margin-bottom:12px"></div>
+      <button onclick="runAiSearch()" id="ais-search-btn" style="width:100%;padding:13px;border:0;border-radius:9px;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:15px;font-weight:600;cursor:pointer;letter-spacing:.3px">
+        &#x1F50D; Jetzt suchen
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div id="ais-loading" style="display:none;padding:48px;text-align:center">
+      <div style="font-size:44px;animation:ais-spin 1.5s linear infinite;display:inline-block">&#x1F50D;</div>
+      <div style="font-size:16px;font-weight:600;color:#4f46e5;margin-top:16px" id="ais-loading-text">Claude durchsucht das Web...</div>
+      <div style="font-size:13px;color:#94a3b8;margin-top:6px">Kann 15–30 Sekunden dauern</div>
+      <div style="margin-top:20px;height:4px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,#7c3aed,#4f46e5);border-radius:4px;animation:ais-progress 25s linear forwards" id="ais-progress-bar"></div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="ais-results" style="display:none;padding:0 24px 24px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-top:4px">
+        <div>
+          <span style="font-size:15px;font-weight:600;color:#334155" id="ais-result-count"></span>
+          <span style="font-size:13px;color:#64748b;margin-left:8px" id="ais-result-sub"></span>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="aisSelectAll(true)" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer">Alle wählen</button>
+          <button onclick="aisSelectAll(false)" style="padding:6px 12px;border:1px solid #e2e8f0;border-radius:6px;background:#fff;font-size:12px;cursor:pointer">Keine</button>
+          <button onclick="aisAddSelected()" id="ais-add-btn" style="padding:6px 16px;border:0;border-radius:6px;background:#16a34a;color:#fff;font-size:13px;font-weight:600;cursor:pointer">&#x2795; Ausgewählte hinzufügen</button>
+        </div>
+      </div>
+      <div id="ais-cards" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+</div>
+
+<style>
+@keyframes ais-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes ais-progress { from { width: 0%; } to { width: 100%; } }
+</style>
+
+<script>
+// ===== KI-PROSPECT SEARCH =====
+let aisFoundLeads = [];
+
+function openAiSearch() {
+  document.getElementById('aiSearchOverlay').style.display = 'flex';
+  document.getElementById('ais-results').style.display = 'none';
+  document.getElementById('ais-loading').style.display = 'none';
+  document.getElementById('ais-form').style.display = 'block';
+  document.getElementById('ais-branche').focus();
+}
+function closeAiSearch() {
+  document.getElementById('aiSearchOverlay').style.display = 'none';
+  aisFoundLeads = [];
+}
+
+async function runAiSearch() {
+  const branche = document.getElementById('ais-branche').value.trim();
+  const region = document.getElementById('ais-region').value.trim() || 'Deutschland';
+  const count = parseInt(document.getElementById('ais-count').value);
+  const errEl = document.getElementById('ais-error');
+
+  if (!branche) { errEl.textContent = 'Bitte eine Branche eingeben.'; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+
+  // Show loading
+  document.getElementById('ais-form').style.display = 'none';
+  document.getElementById('ais-results').style.display = 'none';
+  document.getElementById('ais-loading').style.display = 'block';
+
+  const loadingMsgs = [
+    'Claude durchsucht das Web...',
+    'Firmen werden identifiziert...',
+    'Kontaktdaten werden extrahiert...',
+    'Ergebnisse werden aufbereitet...',
+  ];
+  let msgIdx = 0;
+  const msgInterval = setInterval(() => {
+    msgIdx = (msgIdx + 1) % loadingMsgs.length;
+    const el = document.getElementById('ais-loading-text');
+    if (el) el.textContent = loadingMsgs[msgIdx];
+  }, 6000);
+
+  // Reset progress bar animation
+  const pb = document.getElementById('ais-progress-bar');
+  if (pb) { pb.style.animation = 'none'; pb.offsetHeight; pb.style.animation = 'ais-progress 28s linear forwards'; }
+
+  try {
+    const res = await fetch('/api/ai-prospect-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ branche, region, count, _produkte: PRODUKTE }),
+    });
+    const d = await res.json();
+    clearInterval(msgInterval);
+
+    if (!d.ok) {
+      document.getElementById('ais-loading').style.display = 'none';
+      document.getElementById('ais-form').style.display = 'block';
+      errEl.textContent = d.error || 'Unbekannter Fehler';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    aisFoundLeads = d.leads || [];
+    renderAisResults(branche, region);
+  } catch(e) {
+    clearInterval(msgInterval);
+    document.getElementById('ais-loading').style.display = 'none';
+    document.getElementById('ais-form').style.display = 'block';
+    errEl.textContent = 'Netzwerkfehler: ' + e.message;
+    errEl.style.display = 'block';
+  }
+}
+
+function renderAisResults(branche, region) {
+  document.getElementById('ais-loading').style.display = 'none';
+  document.getElementById('ais-results').style.display = 'block';
+
+  document.getElementById('ais-result-count').textContent = aisFoundLeads.length + ' Firmen gefunden';
+  document.getElementById('ais-result-sub').textContent = branche + ' · ' + region;
+
+  const cards = document.getElementById('ais-cards');
+  cards.innerHTML = aisFoundLeads.map((l, i) => {
+    const tierColor = { A: '#16a34a', B: '#2563eb', C: '#d97706', D: '#94a3b8' }[l.tier] || '#94a3b8';
+    return `<div style="border:1.5px solid #e2e8f0;border-radius:10px;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;background:#fafafa;transition:.15s" id="ais-card-${i}">
+      <input type="checkbox" id="ais-chk-${i}" checked style="margin-top:4px;width:16px;height:16px;cursor:pointer;accent-color:#7c3aed;flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-weight:700;font-size:14px;color:#1e293b">${esc(l.firma)}</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;color:#fff;background:${tierColor}">${l.tier}</span>
+          <span style="padding:2px 8px;border-radius:12px;font-size:11px;background:#f1f5f9;color:#475569">${l.best_score} Pkt</span>
+          ${l.branchen?.[0] ? `<span style="padding:2px 8px;border-radius:12px;font-size:11px;background:#ede9fe;color:#7c3aed">${esc(l.branchen[0])}</span>` : ''}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:#64748b">
+          ${l.plz_ort ? `<span>&#x1F4CD; ${esc(l.plz_ort)}</span>` : ''}
+          ${l.tel ? `<span>&#x1F4DE; ${esc(l.tel)}</span>` : ''}
+          ${l.mail ? `<span>&#x2709;&#xFE0F; ${esc(l.mail)}</span>` : ''}
+          ${l.web ? `<a href="${esc('https://'+l.web.replace(/^https?:\/\//,''))}" target="_blank" style="color:#4f46e5;text-decoration:none">&#x1F310; ${esc(l.web)}</a>` : ''}
+          ${l.kontakt_person ? `<span>&#x1F464; ${esc(l.kontakt_person)}</span>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function aisSelectAll(state) {
+  aisFoundLeads.forEach((_, i) => {
+    const chk = document.getElementById('ais-chk-' + i);
+    if (chk) chk.checked = state;
+  });
+}
+
+async function aisAddSelected() {
+  const selected = aisFoundLeads.filter((_, i) => {
+    const chk = document.getElementById('ais-chk-' + i);
+    return chk && chk.checked;
+  });
+  if (!selected.length) { showToast('Keine Firmen ausgewählt'); return; }
+
+  const btn = document.getElementById('ais-add-btn');
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+
+  let added = 0;
+  const existingFirmen = new Set(LEADS.map(l => l.firma.toLowerCase().trim()));
+
+  for (const lead of selected) {
+    if (existingFirmen.has(lead.firma.toLowerCase().trim())) continue; // skip duplicates
+    try {
+      const payload = { ...lead, branchen: lead.branchen, scores: lead.scores, _produkte: PRODUKTE };
+      const res = await fetch('/api/custom-leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const d = await res.json();
+      if (d.ok) {
+        LEADS.push(d.lead);
+        CUSTOM_LEADS.push(d.lead);
+        existingFirmen.add(lead.firma.toLowerCase().trim());
+        added++;
+      }
+    } catch(e) {}
+  }
+
+  btn.disabled = false; btn.textContent = '&#x2795; Ausgewählte hinzufügen';
+  render();
+  closeAiSearch();
+  showToast('✅ ' + added + ' Firma' + (added !== 1 ? 'en' : '') + ' hinzugefügt');
+}
+</script>
+
 </body>
 </html>

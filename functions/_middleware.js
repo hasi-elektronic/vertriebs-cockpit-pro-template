@@ -946,6 +946,121 @@ export async function onRequest(context) {
     return jsonResponse({ ok: true, override });
   }
 
+  // === API: POST /api/ai-prospect-search — KI-gestützte Firmensuche ===
+  if (url.pathname === '/api/ai-prospect-search' && request.method === 'POST') {
+    const AKEY = env.ANTHROPIC_API_KEY;
+    if (!AKEY) return jsonResponse({ error: 'ANTHROPIC_API_KEY nicht konfiguriert. Bitte in Cloudflare Pages → Settings → Environment Variables setzen.' }, 503);
+
+    const body = await request.json().catch(() => ({}));
+    const branche = clamp(body.branche || '', 100).trim();
+    const region  = clamp(body.region  || 'Deutschland', 100).trim();
+    const count   = Math.min(20, Math.max(3, parseInt(body.count) || 10));
+    if (!branche) return jsonResponse({ error: 'Branche ist Pflichtfeld' }, 400);
+
+    const systemPrompt = `Du bist ein B2B-Vertriebsassistent. Deine Aufgabe: Finde echte Unternehmen aus einer bestimmten Branche in einer bestimmten Region.
+
+WICHTIG:
+- Suche im Web nach echten, existierenden Firmen
+- Gib NUR valides JSON zurück, kein Markdown, keine Erklärungen
+- Format: JSON-Array mit Objekten
+
+Jedes Objekt MUSS diese Felder haben:
+{
+  "firma": "Firmenname GmbH",
+  "plz_ort": "70173 Stuttgart",
+  "plz": "70173",
+  "bundesland": "BW",
+  "tel": "+49 711 ...",
+  "mail": "info@...",
+  "web": "www....",
+  "kontakt_person": "Max Mustermann oder leer",
+  "branche": "exakte Branchenbezeichnung",
+  "umsatz_mio": 0,
+  "score": 65
+}
+
+Bundesland-Kürzel: BW BY BE BB HB HH HE MV NI NW RP SL SN ST SH TH
+Score 0-100: Wie passend ist die Firma als potenzieller Kunde? (Größe, Branche, Erreichbarkeit)
+Wenn eine Information nicht gefunden wird: leerer String "" verwenden, niemals null.`;
+
+    const userMsg = `Finde ${count} Unternehmen aus der Branche "${branche}" in der Region "${region}".
+Suche nach echten Firmen mit Kontaktdaten. Gib nur das JSON-Array zurück.`;
+
+    try {
+      const aiRes = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': AKEY,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 4000,
+          system: systemPrompt,
+          tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+          messages: [{ role: 'user', content: userMsg }],
+        }),
+      });
+
+      if (!aiRes.ok) {
+        const errTxt = await aiRes.text();
+        return jsonResponse({ error: 'Claude API Fehler: ' + aiRes.status, detail: errTxt }, 502);
+      }
+
+      const aiData = await aiRes.json();
+
+      // Extract text from response (last text block)
+      let rawText = '';
+      for (const block of (aiData.content || [])) {
+        if (block.type === 'text') rawText = block.text;
+      }
+
+      // Parse JSON from response
+      let leads = [];
+      // Try direct parse
+      try {
+        const cleaned = rawText.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+        const parsed = JSON.parse(cleaned);
+        leads = Array.isArray(parsed) ? parsed : (parsed.leads || parsed.firmen || []);
+      } catch(e) {
+        // Try to extract JSON array from text
+        const m = rawText.match(/\[[\s\S]+\]/);
+        if (m) {
+          try { leads = JSON.parse(m[0]); } catch(e2) {}
+        }
+      }
+
+      // Sanitize and enrich each lead
+      const PRODUKTE_LIST = (body._produkte || ['produkt_a']);
+      const sanitized = leads.slice(0, count).map((l, idx) => {
+        const sc = Math.max(0, Math.min(100, parseInt(l.score) || 60));
+        const scores = {};
+        for (const p of PRODUKTE_LIST) scores[p] = sc;
+        const best_score = sc;
+        const tier = sc >= 78 ? 'A' : sc >= 62 ? 'B' : sc >= 40 ? 'C' : 'D';
+        return {
+          firma: String(l.firma || '').trim().slice(0, 200),
+          plz_ort: String(l.plz_ort || '').trim().slice(0, 100),
+          plz: String(l.plz || '').trim().slice(0, 10),
+          bundesland: String(l.bundesland || '?').trim().slice(0, 10),
+          tel: String(l.tel || '').trim().slice(0, 50),
+          mail: String(l.mail || '').trim().slice(0, 200),
+          web: String(l.web || '').trim().slice(0, 200),
+          kontakt_person: String(l.kontakt_person || '').trim().slice(0, 200),
+          branchen: [String(l.branche || branche).trim().slice(0, 80)],
+          umsatz_mio: parseFloat(l.umsatz_mio) || 0,
+          scores, best_score, best_produkt: PRODUKTE_LIST[0], tier,
+          _ai_found: true, _search_branche: branche, _search_region: region,
+        };
+      }).filter(l => l.firma);
+
+      return jsonResponse({ ok: true, leads: sanitized, raw_count: leads.length });
+    } catch(e) {
+      return jsonResponse({ error: 'Fehler bei KI-Suche: ' + e.message }, 500);
+    }
+  }
+
   // === API: GET /api/news — alle gesammelten News ===
   if (url.pathname === '/api/news' && request.method === 'GET') {
     if (!env.KV) return jsonResponse({ news: {} });
