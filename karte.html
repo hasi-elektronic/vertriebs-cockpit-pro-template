@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0a4d8c">
+<title>Karten-View - Vertriebs-Cockpit Pro</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+* { box-sizing:border-box; }
+html, body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; height:100%; overflow:hidden; }
+header { background:linear-gradient(135deg,#0a4d8c 0%,#1565c0 100%); color:#fff; padding:12px 18px; box-shadow:0 2px 12px rgba(10,77,140,.25); display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; z-index:1000; position:relative; }
+.title { font-size:17px; font-weight:700; margin:0; }
+.subtitle { font-size:12px; opacity:.85; margin-top:2px; }
+.navbtn { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.3); padding:7px 12px; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; cursor:pointer; }
+.navbtn.danger { background:rgba(220,38,38,.85); }
+
+#layout { display:flex; height:calc(100vh - 60px); }
+#sidebar { width:300px; background:#fff; border-right:1px solid #e2e8f0; overflow-y:auto; padding:14px; flex-shrink:0; }
+#map { flex:1; }
+
+.section { margin-bottom:18px; }
+.section h3 { font-size:12px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.5px; margin:0 0 8px; }
+.filters { display:flex; flex-wrap:wrap; gap:6px; }
+.fbtn { padding:5px 10px; border:1px solid #cbd5e1; background:#fff; border-radius:6px; font-size:12px; cursor:pointer; font-weight:600; color:#475569; }
+.fbtn.active { background:#0a4d8c; color:#fff; border-color:#0a4d8c; }
+.fbtn.tier-A.active { background:#dc2626; border-color:#dc2626; }
+.fbtn.tier-B.active { background:#ea580c; border-color:#ea580c; }
+.fbtn.tier-C.active { background:#1565c0; border-color:#1565c0; }
+.fbtn.tier-D.active { background:#64748b; border-color:#64748b; }
+
+.search { width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px; font-family:inherit; }
+.search:focus { outline:none; border-color:#0a4d8c; }
+
+.legend { background:#f8fafc; padding:10px; border-radius:8px; font-size:12px; }
+.legend-row { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.legend-dot { width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px rgba(0,0,0,.2); }
+
+.stats { background:#f1f5f9; padding:10px 12px; border-radius:8px; }
+.stats-num { font-size:22px; font-weight:700; color:#0a4d8c; font-variant-numeric:tabular-nums; }
+.stats-lab { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+
+.popup-card { font-size:13px; min-width:220px; }
+.popup-card h4 { margin:0 0 4px; font-size:14px; color:#0a4d8c; font-weight:700; }
+.popup-card .meta { font-size:11px; color:#64748b; margin-bottom:8px; }
+.popup-card .badge { display:inline-block; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:700; color:#fff; margin-right:4px; }
+.popup-card .badge.A { background:#dc2626; }
+.popup-card .badge.B { background:#ea580c; }
+.popup-card .badge.C { background:#1565c0; }
+.popup-card .badge.D { background:#64748b; }
+.popup-card .actions { display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.popup-card a, .popup-card button { display:inline-block; padding:5px 9px; background:#f1f5f9; color:#0a4d8c; text-decoration:none; border-radius:5px; font-size:11px; font-weight:600; border:0; cursor:pointer; }
+.popup-card a:hover, .popup-card button:hover { background:#e2e8f0; }
+
+@media (max-width: 720px) {
+  #layout { flex-direction:column; height:calc(100vh - 80px); }
+  #sidebar { width:100%; height:200px; min-height:200px; max-height:35vh; border-right:0; border-bottom:1px solid #e2e8f0; }
+  #map { flex:1; min-height:300px; }
+  .title { font-size:15px; }
+  .navbtn { padding:6px 10px; font-size:11px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 class="title">Karten-View</h1>
+    <div class="subtitle">Lead-Standorte auf der Deutschland-Karte</div>
+  </div>
+  <div style="display:flex;gap:5px;flex-wrap:wrap">
+    <a class="navbtn" href="/">Cockpit</a>
+    <a class="navbtn" href="/dashboard">Dashboard</a>
+    <a class="navbtn" href="/kunden">Kunden</a>
+    <a class="navbtn" href="/konkurenz">Konkurrenz</a>
+    <a class="navbtn danger" href="/__logout">Logout</a>
+  </div>
+</header>
+
+<div id="layout">
+  <aside id="sidebar">
+    <div class="section">
+      <h3>Suche</h3>
+      <input type="text" id="search" class="search" placeholder="Firma / Stadt / PLZ ...">
+    </div>
+
+    <div class="section">
+      <h3>Tier</h3>
+      <div class="filters" id="tierFilters">
+        <button class="fbtn tier-A active" data-tier="A">A</button>
+        <button class="fbtn tier-B active" data-tier="B">B</button>
+        <button class="fbtn tier-C" data-tier="C">C</button>
+        <button class="fbtn tier-D" data-tier="D">D</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Sichtbar</h3>
+      <div class="stats">
+        <div class="stats-num" id="visibleCount">–</div>
+        <div class="stats-lab">Firmen auf Karte</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Legende</h3>
+      <div class="legend">
+        <div class="legend-row"><span class="legend-dot" style="background:#dc2626"></span>Tier A (Hot Leads)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#ea580c"></span>Tier B (Warm)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#1565c0"></span>Tier C (Cold)</div>
+        <div class="legend-row"><span class="legend-dot" style="background:#64748b"></span>Tier D</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Hinweis</h3>
+      <div style="font-size:11px;color:#64748b;line-height:1.5">
+        Pin-Koordinaten basieren auf PLZ-Mittelpunkt (~5km Genauigkeit).
+        ~95 Firmen ohne Geo-Daten werden nicht angezeigt.
+      </div>
+    </div>
+  </aside>
+
+  <div id="map"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+let LEADS = [];
+let map, markersLayer;
+let activeTiers = new Set(['A', 'B']);
+let searchQuery = '';
+
+const TIER_COLOR = { A: '#dc2626', B: '#ea580c', C: '#1565c0', D: '#64748b' };
+
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+async function loadData() {
+  try {
+    const r = await fetch('/leads-geo.json', { cache: 'no-cache' });
+    if (!r.ok) throw new Error('Status ' + r.status);
+    const data = await r.json();
+    return data.leads || [];
+  } catch (e) {
+    console.error('Load error', e);
+    document.getElementById('visibleCount').textContent = 'ERR';
+    return [];
+  }
+}
+
+function initMap() {
+  map = L.map('map', { preferCanvas: true }).setView([51.0, 10.5], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap',
+  }).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
+
+function buildPopup(l) {
+  const tier = l.tier || '?';
+  const plz = l.plz || (l.plz_ort||'').split(/\s/)[0] || '';
+  const ort = (l.plz_ort||'').split(/\s/).slice(1).join(' ');
+  const score = l.best_score ? Math.round(l.best_score) : 0;
+  const branchen = (l.branchen||[]).slice(0,2).join(', ');
+  const wa = l.tel ? '<a href="tel:' + esc(l.tel) + '">Tel</a>' : '';
+  return '<div class="popup-card">' +
+    '<h4>' + esc(l.firma) + '</h4>' +
+    '<div class="meta"><span class="badge ' + tier + '">' + tier + ' · ' + score + '</span>' + esc(plz) + ' ' + esc(ort) + '</div>' +
+    (branchen ? '<div style="font-size:11px;color:#475569;margin-bottom:6px">' + esc(branchen) + '</div>' : '') +
+    '<div class="actions">' +
+      '<a href="/?lead=' + l.id + '" target="_blank">Cockpit-Modal</a>' +
+      (l.web ? '<a href="https://' + esc(l.web.replace(/^https?:\/\//,'')) + '" target="_blank">Website</a>' : '') +
+      (l.mail ? '<a href="mailto:' + esc(l.mail) + '">Mail</a>' : '') +
+      wa +
+    '</div>' +
+  '</div>';
+}
+
+function renderMarkers() {
+  if (!markersLayer) return;
+  markersLayer.clearLayers();
+  const q = searchQuery.toLowerCase().trim();
+  let count = 0;
+  for (const l of LEADS) {
+    if (typeof l.lat !== 'number' || typeof l.lng !== 'number') continue;
+    if (!activeTiers.has(l.tier)) continue;
+    if (q) {
+      const txt = ((l.firma||'') + ' ' + (l.plz_ort||'')).toLowerCase();
+      if (!txt.includes(q)) continue;
+    }
+    const color = TIER_COLOR[l.tier] || '#64748b';
+    const marker = L.circleMarker([l.lat, l.lng], {
+      radius: l.tier === 'A' ? 7 : l.tier === 'B' ? 6 : 5,
+      fillColor: color, color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.85,
+    });
+    marker.bindPopup(buildPopup(l));
+    marker.addTo(markersLayer);
+    count++;
+  }
+  document.getElementById('visibleCount').textContent = count;
+}
+
+document.getElementById('search').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  renderMarkers();
+});
+document.querySelectorAll('#tierFilters .fbtn').forEach(b => {
+  b.addEventListener('click', () => {
+    const t = b.dataset.tier;
+    if (activeTiers.has(t)) { activeTiers.delete(t); b.classList.remove('active'); }
+    else { activeTiers.add(t); b.classList.add('active'); }
+    renderMarkers();
+  });
+});
+
+(async () => {
+  initMap();
+  LEADS = await loadData();
+  if (LEADS.length === 0) {
+    document.getElementById('visibleCount').textContent = '0';
+    return;
+  }
+  renderMarkers();
+})();
+</script>
+</body>
+</html>

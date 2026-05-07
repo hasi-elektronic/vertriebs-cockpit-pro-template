@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0a4d8c">
+<title>Admin - Vertriebs-Cockpit Pro</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f3f6fb; color:#1a1a1a; min-height:100vh; }
+header { background:linear-gradient(135deg,#0a4d8c 0%,#1565c0 100%); color:#fff; padding:14px 18px; box-shadow:0 2px 12px rgba(10,77,140,.25); position:sticky; top:0; z-index:50; }
+.headrow { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.title { font-size:18px; font-weight:700; margin:0; }
+.subtitle { font-size:12px; opacity:.85; margin-top:2px; }
+.navbtn { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.3); padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; cursor:pointer; transition:all .15s; }
+.navbtn:hover { background:rgba(255,255,255,.28); }
+.navbtn.danger { background:rgba(220,38,38,.85); border-color:rgba(220,38,38,1); }
+
+main { max-width:1100px; margin:0 auto; padding:18px; }
+
+.tabs { display:flex; gap:4px; background:#fff; border-radius:10px; padding:4px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:16px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.tab { flex:1; min-width:140px; padding:10px 14px; border:0; background:transparent; font-size:14px; font-weight:600; color:#64748b; border-radius:8px; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.tab.active { background:#0a4d8c; color:#fff; }
+.tab:not(.active):hover { background:#f1f5f9; }
+
+.card { background:#fff; border-radius:12px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:14px; }
+.card h2 { margin:0 0 12px; font-size:16px; font-weight:700; color:#0a4d8c; }
+.card h2 .sub { font-size:12px; color:#64748b; font-weight:500; margin-left:8px; }
+
+.user-table { width:100%; border-collapse:collapse; font-size:14px; }
+.user-table th, .user-table td { text-align:left; padding:10px 8px; border-bottom:1px solid #e2e8f0; }
+.user-table th { background:#f8fafc; font-weight:600; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:.5px; }
+.user-table input[type=text], .user-table input[type=password], .user-table select {
+  width:100%; padding:7px 9px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px; font-family:inherit;
+}
+.user-table input[type=color] { width:38px; height:34px; padding:0; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; }
+.user-table input:focus, .user-table select:focus { outline:none; border-color:#0a4d8c; box-shadow:0 0 0 3px rgba(10,77,140,.15); }
+.role-badge { display:inline-block; padding:3px 8px; border-radius:6px; font-size:11px; font-weight:700; text-transform:uppercase; }
+.role-admin { background:#fef3c7; color:#92400e; }
+.role-vertrieb { background:#dbeafe; color:#1e40af; }
+.del-btn { background:#fee2e2; color:#dc2626; border:0; padding:6px 10px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; }
+.del-btn:hover { background:#fecaca; }
+.del-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+.actions-row { display:flex; gap:10px; margin-top:14px; flex-wrap:wrap; }
+.btn { padding:11px 20px; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; border:0; transition:all .15s; }
+.btn-primary { background:#0a4d8c; color:#fff; }
+.btn-primary:hover { background:#08407a; }
+.btn-secondary { background:#e2e8f0; color:#334155; }
+.btn-secondary:hover { background:#cbd5e1; }
+.btn:disabled { opacity:.5; cursor:not-allowed; }
+
+.form-group { margin-bottom:14px; }
+.form-group label { display:block; font-size:13px; font-weight:600; color:#475569; margin-bottom:6px; }
+.form-group input { width:100%; padding:10px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; font-family:inherit; }
+.form-group input:focus { outline:none; border-color:#0a4d8c; box-shadow:0 0 0 3px rgba(10,77,140,.15); }
+.form-group .hint { font-size:12px; color:#64748b; margin-top:4px; }
+
+.alert { padding:12px 14px; border-radius:8px; font-size:14px; margin-bottom:12px; }
+.alert-error { background:#fee2e2; color:#991b1b; border-left:4px solid #dc2626; }
+.alert-success { background:#dcfce7; color:#166534; border-left:4px solid #16a34a; }
+.alert-info { background:#dbeafe; color:#1e3a8a; border-left:4px solid #1565c0; }
+
+.hidden { display:none; }
+
+@media (max-width: 720px) {
+  main { padding:12px; }
+  .card { padding:14px; }
+  .user-table { display:block; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .user-table th, .user-table td { padding:8px 6px; font-size:13px; }
+  .title { font-size:16px; }
+  .navbtn { padding:7px 11px; font-size:12px; }
+  .tab { padding:9px 10px; font-size:13px; min-width:120px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="headrow">
+    <div>
+      <h1 class="title">Admin-Bereich</h1>
+      <div class="subtitle">Benutzer- &amp; Passwort-Verwaltung</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <a class="navbtn" href="/">Cockpit</a>
+      <a class="navbtn" href="/kunden">Kunden</a>
+      <a class="navbtn" href="/konkurenz">Konkurrenz</a>
+      <a class="navbtn danger" href="/__logout">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loadingMsg" class="alert alert-info">Lade...</div>
+  <div id="alertBox"></div>
+
+  <div class="tabs" id="tabs" style="display:none">
+    <button class="tab active" data-tab="users" id="tabUsers">Benutzer-Verwaltung</button>
+    <button class="tab" data-tab="password">Mein Passwort &auml;ndern</button>
+    <button class="tab" data-tab="backup" id="tabBackup">Backup &amp; Sicherheit</button>
+    <button class="tab" data-tab="audit" id="tabAudit">Audit-Log</button>
+    <button class="tab" data-tab="restore" id="tabRestore">Restore</button>
+  </div>
+
+  <!-- USERS TAB -->
+  <div id="paneUsers" class="hidden">
+    <div class="card">
+      <h2>Benutzer <span class="sub" id="userCount"></span></h2>
+      <div style="overflow-x:auto">
+        <table class="user-table">
+          <thead>
+            <tr>
+              <th style="width:14%">ID</th>
+              <th style="width:22%">Name</th>
+              <th style="width:15%">Passwort</th>
+              <th style="width:14%">Rolle</th>
+              <th style="width:10%">Farbe</th>
+              <th style="width:10%"></th>
+            </tr>
+          </thead>
+          <tbody id="usersBody"></tbody>
+        </table>
+      </div>
+      <div class="actions-row">
+        <button class="btn btn-secondary" onclick="addUserRow()">+ Neuen Benutzer hinzuf&uuml;gen</button>
+        <button class="btn btn-primary" onclick="saveAllUsers()">&Auml;nderungen speichern</button>
+      </div>
+      <p style="font-size:12px;color:#64748b;margin-top:14px">
+        <strong>Hinweis:</strong> Mindestens 1 Admin erforderlich. Passw&ouml;rter m&uuml;ssen eindeutig sein.
+        IDs nur Kleinbuchstaben/Zahlen.
+      </p>
+    </div>
+  </div>
+
+  <!-- PASSWORD TAB -->
+  <div id="panePassword" class="hidden">
+    <div class="card" style="max-width:500px">
+      <h2>Mein Passwort &auml;ndern <span class="sub" id="curUserName"></span></h2>
+      <form onsubmit="changeMyPassword(event)">
+        <div class="form-group">
+          <label>Aktuelles Passwort</label>
+          <input type="password" id="oldPw" required inputmode="numeric" pattern="[0-9]*" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>Neues Passwort</label>
+          <input type="password" id="newPw" required inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="20">
+          <div class="hint">Mindestens 4 Zeichen, nur Zahlen empfohlen</div>
+        </div>
+        <div class="form-group">
+          <label>Neues Passwort wiederholen</label>
+          <input type="password" id="newPw2" required inputmode="numeric" pattern="[0-9]*" minlength="4" maxlength="20">
+        </div>
+        <button type="submit" class="btn btn-primary">Passwort &auml;ndern</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- BACKUP TAB -->
+  <div id="paneBackup" class="hidden">
+    <div class="card" style="max-width:700px">
+      <h2>Backup &amp; Daten-Export</h2>
+      <p style="font-size:13px;color:#475569;line-height:1.6">
+        Lade ein vollstaendiges JSON-Backup aller Daten herunter. Enthaelt: Benutzer, Pipeline-Status, Notizen, Firminfo-Overrides, Konkurrenz-Klassifikationen, Kontakte, Aktivitaet, Score-Overrides, News, Audit-Log.
+      </p>
+      <button class="btn btn-primary" onclick="downloadBackup()">JSON-Backup herunterladen</button>
+      <p style="font-size:12px;color:#94a3b8;margin-top:14px;line-height:1.5">
+        <strong>Hinweis:</strong> Backup ist eine ZIP-loose JSON-Datei. Bewahre sie an einem sicheren Ort auf (USB-Stick, lokale Festplatte). Im Notfall (KV-Verlust, Account-Compromise) kann der Stand wiederhergestellt werden.
+      </p>
+      <div style="margin-top:24px;padding:14px;background:#f8fafc;border-radius:8px;border-left:4px solid #16a34a">
+        <strong style="font-size:13px;color:#0a4d8c">Sprint 10 Sicherheit aktiv:</strong>
+        <ul style="font-size:12px;color:#475569;margin:6px 0 0 18px;padding:0;line-height:1.7">
+          <li>Brute-Force Schutz: 5 Login-Versuche pro IP / 15min</li>
+          <li>CSRF: SameSite=Strict + Origin-Check auf allen API-Endpunkten</li>
+          <li>Session: 7 Tage (vorher 30) + HttpOnly + Secure</li>
+          <li>Input-Limits: 200 Zeichen Felder / 5000 Zeichen Notizen</li>
+          <li>HTTP-Cache: leads-geo.json 10min, andere Pages no-cache</li>
+          <li>HSTS, CSP, X-Frame-Options aktiv</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUDIT TAB -->
+  <div id="paneAudit" class="hidden">
+    <div class="card">
+      <h2>Audit-Log <span class="sub" id="auditCount"></span></h2>
+      <div class="toolbar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <select id="auditTypeFilter" onchange="loadAudit()" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px">
+          <option value="">Alle Typen</option>
+          <option value="status">Status-Wechsel</option>
+          <option value="note">Notizen</option>
+          <option value="firminfo">Firmen-Daten</option>
+          <option value="login">Logins</option>
+          <option value="konk">Konkurrenz</option>
+          <option value="score">Score-Override</option>
+          <option value="users">User-Aenderungen</option>
+          <option value="restore">Restores</option>
+        </select>
+        <input type="text" id="auditUserFilter" placeholder="User filtern..." onkeyup="if(event.key==='Enter')loadAudit()" style="padding:7px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;flex:1;min-width:120px">
+        <button class="btn btn-primary" onclick="loadAudit()">Aktualisieren</button>
+      </div>
+      <div id="auditList" style="font-size:13px"><em style="color:#94a3b8">Lade ...</em></div>
+    </div>
+  </div>
+
+  <!-- RESTORE TAB -->
+  <div id="paneRestore" class="hidden">
+    <div class="card" style="max-width:700px">
+      <h2>Restore aus Backup</h2>
+      <div class="alert alert-error" style="margin-bottom:14px">
+        <strong>VORSICHT:</strong> Restore ueberschreibt bestehende Daten in KV. Mache vorher ein aktuelles Backup!
+      </div>
+      <p style="font-size:13px;color:#475569;line-height:1.6">
+        Lade ein zuvor heruntergeladenes <code>brand-backup-YYYY-MM-DD.json</code> hoch. Du kannst zuerst einen <strong>Dry-Run</strong> machen (nichts wird geschrieben, nur Statistik).
+      </p>
+      <input type="file" id="restoreFile" accept="application/json" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;margin:10px 0">
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">
+        <button class="btn" onclick="doRestore(true)" style="background:#0ea5e9;color:#fff">Dry-Run (testen, nichts schreiben)</button>
+        <button class="btn btn-primary" onclick="doRestore(false)" style="background:#dc2626">RESTORE (ueberschreibt!)</button>
+      </div>
+      <div id="restoreResult" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let CURRENT_USER = null;
+let USERS = [];
+
+function showAlert(type, msg, autoDismiss) {
+  const box = document.getElementById('alertBox');
+  box.innerHTML = '<div class="alert alert-' + type + '">' + msg + '</div>';
+  if (autoDismiss !== false) {
+    setTimeout(() => { box.innerHTML = ''; }, 5000);
+  }
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+async function init() {
+  try {
+    // Get current user info
+    const meRes = await fetch('/api/me');
+    if (!meRes.ok) throw new Error('Nicht eingeloggt');
+    const me = await meRes.json();
+    CURRENT_USER = me;
+    document.getElementById('curUserName').textContent = '(' + me.name + ')';
+
+    document.getElementById('tabs').style.display = 'flex';
+
+    // Hide users tab if not admin
+    if (me.role !== 'admin') {
+      document.getElementById('tabUsers').style.display = 'none';
+      document.getElementById('tabBackup').style.display = 'none';
+      document.getElementById('tabAudit').style.display = 'none';
+      document.getElementById('tabRestore').style.display = 'none';
+      switchTab('password');
+    } else {
+      await loadUsers();
+      switchTab('users');
+    }
+
+    document.getElementById('loadingMsg').style.display = 'none';
+  } catch (e) {
+    document.getElementById('loadingMsg').className = 'alert alert-error';
+    document.getElementById('loadingMsg').textContent = 'Fehler: ' + e.message + ' - Bitte neu einloggen.';
+  }
+}
+
+async function loadUsers() {
+  const r = await fetch('/api/admin/users');
+  if (!r.ok) {
+    if (r.status === 403) throw new Error('Nur Admins koennen Benutzer verwalten');
+    throw new Error('Fehler beim Laden');
+  }
+  const j = await r.json();
+  USERS = j.users || [];
+  renderUsers();
+}
+
+function renderUsers() {
+  document.getElementById('userCount').textContent = '(' + USERS.length + ')';
+  const body = document.getElementById('usersBody');
+  body.innerHTML = USERS.map((u, i) => {
+    const sigPreview = (u.email_signature || '').split('\n').slice(0,2).join(' / ') || '<em style="color:#94a3b8">Keine Signatur</em>';
+    return `
+    <tr data-idx="${i}">
+      <td><input type="text" value="${esc(u.id)}" data-field="id" placeholder="z.B. hamdi"></td>
+      <td><input type="text" value="${esc(u.name)}" data-field="name" placeholder="Anzeigename"></td>
+      <td><input type="text" value="${esc(u.password)}" data-field="password" placeholder="Passwort"></td>
+      <td>
+        <select data-field="role">
+          <option value="admin" ${u.role==='admin'?'selected':''}>Admin</option>
+          <option value="vertrieb" ${u.role==='vertrieb'?'selected':''}>Vertrieb</option>
+        </select>
+      </td>
+      <td><input type="color" value="${esc(u.color || '#0a4d8c')}" data-field="color"></td>
+      <td><button class="del-btn" onclick="deleteUserRow(${i})" ${USERS.length<=1?'disabled':''}>L&ouml;schen</button></td>
+    </tr>
+    <tr class="sig-row" data-idx="${i}">
+      <td colspan="6" style="background:#f8fafc;padding:8px 12px">
+        <details>
+          <summary style="cursor:pointer;font-size:13px;color:#475569"><strong>Email-Signatur:</strong> ${esc(sigPreview)}</summary>
+          <textarea data-field="email_signature" rows="10" placeholder="Mit freundlichen Gruessen..." style="width:100%;margin-top:8px;padding:10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;font-family:monospace;line-height:1.5">${esc(u.email_signature || '')}</textarea>
+          <div style="font-size:11px;color:#64748b;margin-top:4px">Diese Signatur erscheint am Ende jeder Email die dieser Benutzer ueber das Cockpit verschickt. Standard-Abschluss aus den Templates wird ersetzt.</div>
+        </details>
+      </td>
+    </tr>
+  `;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function addUserRow() {
+  USERS.push({ id: 'vertrieb' + (USERS.length+1), name: 'Neuer Benutzer', password: '00000', role: 'vertrieb', color: '#16a34a' });
+  renderUsers();
+}
+
+function deleteUserRow(idx) {
+  if (!confirm('Benutzer "' + (USERS[idx].name||'?') + '" wirklich entfernen?')) return;
+  USERS.splice(idx, 1);
+  renderUsers();
+}
+
+function collectUsersFromTable() {
+  const rows = document.querySelectorAll('#usersBody tr:not(.sig-row)');
+  const collected = [];
+  rows.forEach(row => {
+    const idx = row.dataset.idx;
+    const obj = {};
+    row.querySelectorAll('input,select').forEach(inp => {
+      obj[inp.dataset.field] = inp.value.trim();
+    });
+    // Read signature from corresponding sig-row
+    const sigRow = document.querySelector('#usersBody tr.sig-row[data-idx="' + idx + '"]');
+    if (sigRow) {
+      const ta = sigRow.querySelector('textarea[data-field="email_signature"]');
+      obj.email_signature = ta ? ta.value : '';
+    } else {
+      obj.email_signature = '';
+    }
+    collected.push(obj);
+  });
+  return collected;
+}
+
+async function saveAllUsers() {
+  const newUsers = collectUsersFromTable();
+
+  // Client validation
+  const ids = new Set(), pws = new Set();
+  for (const u of newUsers) {
+    if (!u.id || !u.name || !u.password || !u.role) {
+      return showAlert('error', 'Alle Felder mussen ausgefullt sein');
+    }
+    if (!/^[a-z0-9_]+$/.test(u.id)) {
+      return showAlert('error', 'ID nur Kleinbuchstaben/Zahlen/Underscore: ' + u.id);
+    }
+    if (ids.has(u.id)) return showAlert('error', 'Doppelte ID: ' + u.id);
+    if (pws.has(u.password)) return showAlert('error', 'Doppeltes Passwort bei: ' + u.name);
+    if (u.password.length < 4) return showAlert('error', 'Passwort zu kurz (min 4): ' + u.name);
+    ids.add(u.id); pws.add(u.password);
+  }
+  if (!newUsers.some(u => u.role === 'admin')) {
+    return showAlert('error', 'Mindestens 1 Admin erforderlich');
+  }
+
+  const r = await fetch('/api/admin/users', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ users: newUsers })
+  });
+  const j = await r.json();
+  if (!r.ok) return showAlert('error', j.error || 'Fehler beim Speichern');
+  showAlert('success', 'Erfolgreich gespeichert! ' + newUsers.length + ' Benutzer.');
+  USERS = newUsers;
+  renderUsers();
+}
+
+async function changeMyPassword(e) {
+  e.preventDefault();
+  const oldPw = document.getElementById('oldPw').value.trim();
+  const newPw = document.getElementById('newPw').value.trim();
+  const newPw2 = document.getElementById('newPw2').value.trim();
+
+  if (newPw !== newPw2) return showAlert('error', 'Neue Passworter stimmen nicht uberein');
+  if (newPw.length < 4) return showAlert('error', 'Neues Passwort zu kurz (min 4 Zeichen)');
+  if (newPw === oldPw) return showAlert('error', 'Neues Passwort ist gleich altem Passwort');
+
+  const r = await fetch('/api/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldPw, newPw })
+  });
+  const j = await r.json();
+  if (!r.ok) return showAlert('error', j.error || 'Fehler beim Andern');
+  showAlert('success', 'Passwort erfolgreich geandert! Beim nachsten Login das neue Passwort verwenden.');
+  document.getElementById('oldPw').value = '';
+  document.getElementById('newPw').value = '';
+  document.getElementById('newPw2').value = '';
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.getElementById('paneUsers').classList.toggle('hidden', name !== 'users');
+  document.getElementById('panePassword').classList.toggle('hidden', name !== 'password');
+  document.getElementById('paneBackup').classList.toggle('hidden', name !== 'backup');
+  document.getElementById('paneAudit').classList.toggle('hidden', name !== 'audit');
+  document.getElementById('paneRestore').classList.toggle('hidden', name !== 'restore');
+  if (name === 'audit') loadAudit();
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+async function downloadBackup() {
+  try {
+    const r = await fetch('/api/backup');
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      throw new Error(j.error || 'HTTP ' + r.status);
+    }
+    const blob = await r.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'brand-backup-' + new Date().toISOString().slice(0,10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 100);
+    showAlert('success', 'Backup heruntergeladen.');
+  } catch (e) {
+    showAlert('error', 'Backup-Fehler: ' + e.message);
+  }
+}
+window.downloadBackup = downloadBackup;
+
+async function loadAudit() {
+  const typeF = document.getElementById('auditTypeFilter').value;
+  const userF = document.getElementById('auditUserFilter').value.trim();
+  const params = new URLSearchParams();
+  if (typeF) params.set('type', typeF);
+  if (userF) params.set('user', userF);
+  params.set('limit', '200');
+  const list = document.getElementById('auditList');
+  list.innerHTML = '<em style="color:#94a3b8">Lade ...</em>';
+  try {
+    const r = await fetch('/api/audit-log?' + params.toString());
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Fehler');
+    document.getElementById('auditCount').textContent = '(' + (d.events||[]).length + ' / ' + (d.total||0) + ')';
+    if ((d.events||[]).length === 0) {
+      list.innerHTML = '<em style="color:#94a3b8">Keine Eintraege</em>';
+      return;
+    }
+    list.innerHTML = d.events.map(e => {
+      const dt = e.ts ? new Date(e.ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const act = e.action || (e._key||'').split(':')[1] || 'unknown';
+      const usr = e.name || e.deleted_by_name || e.edited_by_name || e.user || e.deleted_by || e.edited_by || '?';
+      let detail = '';
+      if (e.leadId) detail += '<span style="color:#94a3b8">Lead #' + e.leadId + '</span> ';
+      if (e.status) detail += '<strong>' + esc(e.status) + '</strong> ';
+      if (e.text) detail += '<em>"' + esc((e.text||'').slice(0,80)) + '"</em>';
+      if (e.classification) detail += '<strong>' + esc(e.classification) + '</strong> ';
+      if (e.changed) detail += (e.changed||[]).join(', ');
+      if (e.fields) detail += 'Felder: ' + (e.fields||[]).join(', ');
+      if (e.restored !== undefined) detail += 'Restored: ' + e.restored + (e.dry_run ? ' (Dry-Run)' : '');
+      if (e.ip) detail += '<span style="color:#94a3b8;font-size:11px"> IP: ' + esc(e.ip) + '</span>';
+      return '<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid #f1f5f9;font-size:13px">' +
+        '<div style="min-width:130px;color:#94a3b8;font-variant-numeric:tabular-nums">' + dt + '</div>' +
+        '<div style="min-width:130px;color:#0a4d8c;font-weight:600">' + esc(act) + '</div>' +
+        '<div style="min-width:120px">' + esc(usr) + '</div>' +
+        '<div style="flex:1">' + detail + '</div>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    list.innerHTML = '<div class="alert alert-error">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+window.loadAudit = loadAudit;
+
+async function doRestore(dryRun) {
+  const fileInput = document.getElementById('restoreFile');
+  if (!fileInput.files || !fileInput.files[0]) {
+    alert('Bitte Backup-Datei auswaehlen');
+    return;
+  }
+  if (!dryRun && !confirm('WIRKLICH RESTORE ausfuehren? Bestehende Daten werden ueberschrieben!')) return;
+  const result = document.getElementById('restoreResult');
+  result.innerHTML = '<div class="alert alert-info">Verarbeite ...</div>';
+  try {
+    const text = await fileInput.files[0].text();
+    const backup = JSON.parse(text);
+    if (!backup.data) throw new Error('Ungueltiges Backup-Format (data-Feld fehlt)');
+    const r = await fetch('/api/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ data: backup.data, dry_run: dryRun })
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Fehler');
+    result.innerHTML = '<div class="alert alert-success"><strong>' + (dryRun ? 'Dry-Run OK' : 'Restore erfolgreich') + '</strong><br>Restored: ' + j.restored + ' / Skipped: ' + j.skipped + (j.errors && j.errors.length ? '<br>Errors: ' + j.errors.length : '') + '</div>';
+  } catch (e) {
+    result.innerHTML = '<div class="alert alert-error">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+window.doRestore = doRestore;
+
+init();
+</script>
+</body>
+</html>

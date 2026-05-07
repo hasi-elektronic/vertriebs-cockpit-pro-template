@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0a4d8c">
+<title>Vertrieb-Dashboard - Vertriebs-Cockpit Pro</title>
+<style>
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f3f6fb; color:#1a1a1a; min-height:100vh; }
+header { background:linear-gradient(135deg,#0a4d8c 0%,#1565c0 100%); color:#fff; padding:14px 18px; box-shadow:0 2px 12px rgba(10,77,140,.25); position:sticky; top:0; z-index:50; }
+.headrow { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.title { font-size:18px; font-weight:700; margin:0; }
+.subtitle { font-size:12px; opacity:.85; margin-top:2px; }
+.navbtn { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.3); padding:8px 14px; border-radius:8px; font-size:13px; font-weight:600; text-decoration:none; cursor:pointer; transition:all .15s; }
+.navbtn:hover { background:rgba(255,255,255,.28); }
+.navbtn.danger { background:rgba(220,38,38,.85); border-color:rgba(220,38,38,1); }
+
+main { max-width:1200px; margin:0 auto; padding:18px; }
+
+.card { background:#fff; border-radius:12px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:16px; }
+.card h2 { margin:0 0 14px; font-size:16px; font-weight:700; color:#0a4d8c; display:flex; align-items:center; gap:8px; }
+.card h2 .sub { font-size:12px; color:#64748b; font-weight:500; }
+
+/* Funnel */
+.funnel { display:flex; flex-direction:column; gap:8px; }
+.funnel-bar { display:flex; align-items:center; gap:12px; padding:10px 14px; background:#f8fafc; border-radius:8px; border-left:4px solid #0a4d8c; }
+.funnel-stage { font-weight:700; min-width:130px; color:#0a4d8c; font-size:14px; }
+.funnel-track { flex:1; height:24px; background:#e2e8f0; border-radius:12px; overflow:hidden; position:relative; }
+.funnel-fill { height:100%; background:linear-gradient(90deg,#1565c0,#0a4d8c); transition:width .4s ease; display:flex; align-items:center; padding-left:10px; color:#fff; font-weight:700; font-size:13px; }
+.funnel-count { font-weight:700; min-width:55px; text-align:right; color:#0a4d8c; font-variant-numeric:tabular-nums; }
+
+.funnel-bar.s-Neu { border-left-color:#94a3b8; }
+.funnel-bar.s-Kontaktiert { border-left-color:#1565c0; }
+.funnel-bar.s-Erstgesp { border-left-color:#9333ea; }
+.funnel-bar.s-Angebot { border-left-color:#ea580c; }
+.funnel-bar.s-Abschluss { border-left-color:#16a34a; }
+.funnel-bar.s-Kunde { border-left-color:#0a4d8c; background:#dcfce7; }
+.funnel-bar.s-Verloren { border-left-color:#dc2626; opacity:.7; }
+
+/* User stats grid */
+.users-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+.user-card { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:14px; }
+.user-card .uhdr { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.user-card .uavatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px; }
+.user-card .uname { font-weight:700; color:#0a4d8c; font-size:15px; }
+.user-card .urole { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.5px; }
+.user-stats { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; }
+.stat-block { background:#f8fafc; padding:10px 12px; border-radius:8px; }
+.stat-block .lbl { font-size:11px; color:#64748b; text-transform:uppercase; letter-spacing:.5px; font-weight:600; }
+.stat-block .val { font-size:20px; font-weight:700; color:#0a4d8c; margin-top:4px; font-variant-numeric:tabular-nums; }
+.stat-block .sub { font-size:11px; color:#94a3b8; margin-top:2px; }
+
+/* Period selector */
+.period-tabs { display:flex; gap:4px; background:#f1f5f9; padding:4px; border-radius:8px; margin-bottom:12px; }
+.period-tab { flex:1; padding:8px 12px; border:0; background:transparent; font-size:13px; font-weight:600; color:#64748b; border-radius:6px; cursor:pointer; }
+.period-tab.active { background:#fff; color:#0a4d8c; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+
+.totals { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+.tot-block { background:linear-gradient(135deg,#0a4d8c,#1565c0); color:#fff; padding:14px; border-radius:10px; text-align:center; }
+.tot-block .num { font-size:28px; font-weight:800; font-variant-numeric:tabular-nums; }
+.tot-block .lab { font-size:12px; opacity:.9; margin-top:2px; }
+
+.alert { padding:12px 14px; border-radius:8px; font-size:14px; margin-bottom:12px; }
+.alert-error { background:#fee2e2; color:#991b1b; border-left:4px solid #dc2626; }
+.alert-info { background:#dbeafe; color:#1e3a8a; border-left:4px solid #1565c0; }
+
+@media (max-width: 720px) {
+  main { padding:12px; }
+  .card { padding:14px; }
+  .funnel-stage { min-width:100px; font-size:13px; }
+  .funnel-bar { padding:8px 10px; }
+  .users-grid { grid-template-columns:1fr; }
+  .title { font-size:16px; }
+  .navbtn { padding:7px 11px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="headrow">
+    <div>
+      <h1 class="title">Vertrieb-Dashboard</h1>
+      <div class="subtitle">Pipeline &amp; Aktivitaet im Ueberblick</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <a class="navbtn" href="/">Cockpit</a>
+      <a class="navbtn" href="/kunden">Kunden</a>
+      <a class="navbtn" href="/konkurenz">Konkurrenz</a>
+      <a class="navbtn" id="adminLink" href="/admin" style="display:none">Admin</a>
+      <a class="navbtn danger" href="/__logout">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div id="loadingMsg" class="alert alert-info">Lade Statistiken...</div>
+  <div id="content" style="display:none">
+
+    <div class="card">
+      <h2>Gesamt-Zahlen <span class="sub" id="userScope"></span></h2>
+      <div class="totals">
+        <div class="tot-block"><div class="num" id="tot-leads">–</div><div class="lab">Leads gesamt</div></div>
+        <div class="tot-block" style="background:linear-gradient(135deg,#16a34a,#22c55e)"><div class="num" id="tot-pipeline">–</div><div class="lab">Im Funnel</div></div>
+        <div class="tot-block" style="background:linear-gradient(135deg,#ea580c,#f97316)"><div class="num" id="tot-active">–</div><div class="lab">Aktiv (Kontakt-Abschluss)</div></div>
+        <div class="tot-block" style="background:linear-gradient(135deg,#0a4d8c,#1e6db8)"><div class="num" id="tot-kunde">–</div><div class="lab">Kunden</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Pipeline-Funnel</h2>
+      <div id="funnelView" class="funnel"></div>
+    </div>
+
+    <div class="card">
+      <h2>Aktivitaet pro Vertriebler <span class="sub">(Audit-Log)</span></h2>
+      <div class="period-tabs">
+        <button class="period-tab active" data-period="d7">Letzte 7 Tage</button>
+        <button class="period-tab" data-period="d30">Letzte 30 Tage</button>
+      </div>
+      <div id="usersGrid" class="users-grid"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+let DATA = null;
+let CURRENT_PERIOD = 'd7';
+let CURRENT_USER = null;
+
+async function init() {
+  try {
+    const me = await fetch('/api/me').then(r => r.json());
+    CURRENT_USER = me;
+    if (me.role === 'admin') document.getElementById('adminLink').style.display = '';
+    document.getElementById('userScope').textContent = me.role === 'admin' ? '(Admin-View - alle User)' : '(Eigene Aktivitaet)';
+
+    const r = await fetch('/api/dashboard');
+    if (!r.ok) throw new Error('Fehler beim Laden');
+    DATA = await r.json();
+
+    document.getElementById('loadingMsg').style.display = 'none';
+    document.getElementById('content').style.display = '';
+
+    renderTotals();
+    renderFunnel();
+    renderUsers();
+  } catch (e) {
+    document.getElementById('loadingMsg').className = 'alert alert-error';
+    document.getElementById('loadingMsg').textContent = 'Fehler: ' + e.message;
+  }
+}
+
+function renderTotals() {
+  const f = DATA.funnel || {};
+  const inFunnel = (f.Neu||0) + (f.Kontaktiert||0) + (f['Erstgespräch']||0) + (f.Angebot||0) + (f.Abschluss||0);
+  const active = (f.Kontaktiert||0) + (f['Erstgespräch']||0) + (f.Angebot||0) + (f.Abschluss||0);
+  document.getElementById('tot-leads').textContent = (DATA.totals && DATA.totals.leads) || '–';
+  document.getElementById('tot-pipeline').textContent = inFunnel;
+  document.getElementById('tot-active').textContent = active;
+  document.getElementById('tot-kunde').textContent = f.Kunde || 0;
+}
+
+function renderFunnel() {
+  const f = DATA.funnel || {};
+  const stages = ['Neu','Kontaktiert','Erstgespräch','Angebot','Abschluss','Kunde','Verloren'];
+  const max = Math.max(1, ...stages.map(s => f[s] || 0));
+  const list = document.getElementById('funnelView');
+  list.innerHTML = stages.map(s => {
+    const n = f[s] || 0;
+    const pct = max ? Math.round((n / max) * 100) : 0;
+    const cls = s.replace('ä','').replace('ö','').replace('ü','').slice(0,8);
+    return '<div class="funnel-bar s-' + cls + '">' +
+      '<div class="funnel-stage">' + s + '</div>' +
+      '<div class="funnel-track"><div class="funnel-fill" style="width:' + pct + '%">' + (n > 0 && pct > 15 ? n : '') + '</div></div>' +
+      '<div class="funnel-count">' + n + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderUsers() {
+  const grid = document.getElementById('usersGrid');
+  const byUser = DATA.by_user || {};
+  const period = CURRENT_PERIOD;
+  const users = Object.values(byUser);
+  if (users.length === 0) {
+    grid.innerHTML = '<div style="color:#94a3b8;padding:14px">Noch keine Aktivitaet im Audit-Log</div>';
+    return;
+  }
+  // Sort by total activity descending
+  users.sort((a, b) => {
+    const sumA = Object.values(a[period] || {}).reduce((x,y) => x+y, 0);
+    const sumB = Object.values(b[period] || {}).reduce((x,y) => x+y, 0);
+    return sumB - sumA;
+  });
+  grid.innerHTML = users.map(u => {
+    const stats = u[period] || {};
+    const initials = (u.name || '?').split(/\s+/).map(w => w[0]).slice(0,2).join('');
+    const color = u.color || '#64748b';
+    return '<div class="user-card">' +
+      '<div class="uhdr">' +
+        '<div class="uavatar" style="background:' + color + '">' + initials + '</div>' +
+        '<div><div class="uname">' + escapeHtml(u.name) + '</div><div class="urole">' + (u.id === 'hamdi' ? 'Admin' : 'Vertrieb') + '</div></div>' +
+      '</div>' +
+      '<div class="user-stats">' +
+        '<div class="stat-block"><div class="lbl">Status-Updates</div><div class="val">' + (stats.status || 0) + '</div></div>' +
+        '<div class="stat-block"><div class="lbl">Notiz-Aktionen</div><div class="val">' + (stats.note || 0) + '</div></div>' +
+        '<div class="stat-block"><div class="lbl">Stammdaten</div><div class="val">' + (stats.firminfo || 0) + '</div></div>' +
+        '<div class="stat-block"><div class="lbl">Logins</div><div class="val">' + (stats.login || 0) + '</div></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+document.querySelectorAll('.period-tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(x => x.classList.toggle('active', x === t));
+    CURRENT_PERIOD = t.dataset.period;
+    renderUsers();
+  });
+});
+
+init();
+</script>
+</body>
+</html>
+                                                                                                                                                       

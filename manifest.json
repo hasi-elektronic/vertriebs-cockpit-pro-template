@@ -1,0 +1,27 @@
+{
+  "name": "Vertriebs-Cockpit Pro",
+  "short_name": "{{COMPANY_NAME}}",
+  "description": "Lead-Analyse & Akquise-Plattform fuer Manfred {{COMPANY_NAME}} Apparatebau",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a4d8c",
+  "theme_color": "#0a4d8c",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "lang": "de"
+}

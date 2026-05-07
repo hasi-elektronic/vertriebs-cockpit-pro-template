@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0a4d8c">
+<title>News-Watch - Vertriebs-Cockpit Pro</title>
+<style>
+* { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f3f6fb; color:#1a1a1a; }
+header { background:linear-gradient(135deg,#0a4d8c 0%,#1565c0 100%); color:#fff; padding:14px 18px; box-shadow:0 2px 12px rgba(10,77,140,.25); position:sticky; top:0; z-index:50; }
+.headrow { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.title { font-size:18px; font-weight:700; margin:0; }
+.subtitle { font-size:12px; opacity:.85; margin-top:2px; }
+.navbtn { background:rgba(255,255,255,.18); color:#fff; border:1px solid rgba(255,255,255,.3); padding:7px 12px; border-radius:8px; font-size:12px; font-weight:600; text-decoration:none; cursor:pointer; }
+.navbtn.danger { background:rgba(220,38,38,.85); }
+
+main { max-width:1100px; margin:0 auto; padding:18px; }
+.card { background:#fff; border-radius:12px; padding:18px; box-shadow:0 1px 4px rgba(0,0,0,.06); margin-bottom:14px; }
+.card h2 { margin:0 0 12px; font-size:16px; font-weight:700; color:#0a4d8c; }
+
+.toolbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.btn { padding:9px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:0; }
+.btn-primary { background:#0a4d8c; color:#fff; }
+.btn-primary:hover { background:#08407a; }
+.btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+.search { padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:13px; flex:1; min-width:200px; font-family:inherit; }
+
+.firm-block { background:#fff; border-radius:10px; padding:14px 16px; margin-bottom:10px; border-left:4px solid #1565c0; }
+.firm-block.tier-A { border-left-color:#dc2626; }
+.firm-block.tier-B { border-left-color:#ea580c; }
+.firm-head { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:10px; }
+.firm-name { font-weight:700; color:#0a4d8c; font-size:15px; }
+.firm-meta { font-size:11px; color:#64748b; }
+.news-item { padding:8px 10px; border-left:2px solid #e2e8f0; margin-bottom:6px; }
+.news-item:hover { border-left-color:#0a4d8c; background:#f8fafc; }
+.news-title { font-size:13.5px; font-weight:600; color:#0a4d8c; text-decoration:none; line-height:1.4; }
+.news-title:hover { text-decoration:underline; }
+.news-meta { font-size:11px; color:#94a3b8; margin-top:2px; }
+.no-news { color:#94a3b8; font-size:12px; font-style:italic; padding:6px 0; }
+
+.alert { padding:12px 14px; border-radius:8px; font-size:14px; margin-bottom:12px; }
+.alert-info { background:#dbeafe; color:#1e3a8a; border-left:4px solid #1565c0; }
+.alert-success { background:#dcfce7; color:#166534; border-left:4px solid #16a34a; }
+.alert-error { background:#fee2e2; color:#991b1b; border-left:4px solid #dc2626; }
+
+@media (max-width: 720px) {
+  main { padding:12px; }
+  .card { padding:14px; }
+  .firm-block { padding:12px; }
+  .title { font-size:16px; }
+  .navbtn { padding:6px 10px; font-size:11px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="headrow">
+    <div>
+      <h1 class="title">News-Watch</h1>
+      <div class="subtitle">Pressemeldungen Top-50 Leads (Google News)</div>
+    </div>
+    <div style="display:flex;gap:5px;flex-wrap:wrap">
+      <a class="navbtn" href="/">Cockpit</a>
+      <a class="navbtn" href="/dashboard">Dashboard</a>
+      <a class="navbtn" href="/karte">Karte</a>
+      <a class="navbtn danger" href="/__logout">Logout</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="card">
+    <h2>Top-50 Firmen Pressemeldungen</h2>
+    <div class="toolbar">
+      <input type="text" id="search" class="search" placeholder="Firma / News-Titel filtern...">
+      <button id="refreshBtn" class="btn btn-primary" onclick="refreshNews()">News aktualisieren (Top-25)</button>
+    </div>
+    <div id="status" style="font-size:12px;color:#64748b;margin-top:8px"></div>
+  </div>
+  <div id="alertBox"></div>
+  <div id="content"><div class="alert alert-info">Lade News...</div></div>
+</main>
+
+<script>
+let CURRENT_USER = null;
+let TOP_FIRMS = [];
+let NEWS_DATA = {};
+
+function esc(s) { return String(s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+async function init() {
+  try {
+    CURRENT_USER = await fetch('/api/me').then(r => r.json());
+    if (CURRENT_USER.role !== 'admin') {
+      document.getElementById('refreshBtn').style.display = 'none';
+    }
+    // Load top firms (top-50 A-Tier from leads-geo.json)
+    const geo = await fetch('/leads-geo.json').then(r => r.json());
+    const allLeads = (geo.leads || []);
+    TOP_FIRMS = allLeads.filter(l => l.tier === 'A')
+      .sort((a, b) => (b.best_score||0) - (a.best_score||0))
+      .slice(0, 50);
+
+    await loadNews();
+    render();
+  } catch (e) {
+    document.getElementById('content').innerHTML = '<div class="alert alert-error">Fehler: ' + esc(e.message) + '</div>';
+  }
+}
+
+async function loadNews() {
+  try {
+    const r = await fetch('/api/news');
+    const d = await r.json();
+    NEWS_DATA = d.news || {};
+  } catch (e) { NEWS_DATA = {}; }
+}
+
+function render() {
+  const q = (document.getElementById('search').value || '').toLowerCase().trim();
+  const container = document.getElementById('content');
+  const filtered = TOP_FIRMS.filter(f => {
+    if (!q) return true;
+    if ((f.firma||'').toLowerCase().includes(q)) return true;
+    const news = NEWS_DATA[f.id];
+    if (news && news.items) {
+      return news.items.some(it => (it.title||'').toLowerCase().includes(q));
+    }
+    return false;
+  });
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="alert alert-info">Keine Treffer.</div>';
+    return;
+  }
+  // Show firms with news first, then firms without
+  filtered.sort((a, b) => {
+    const na = (NEWS_DATA[a.id] && NEWS_DATA[a.id].items) ? NEWS_DATA[a.id].items.length : 0;
+    const nb = (NEWS_DATA[b.id] && NEWS_DATA[b.id].items) ? NEWS_DATA[b.id].items.length : 0;
+    return nb - na;
+  });
+  container.innerHTML = filtered.map(f => {
+    const n = NEWS_DATA[f.id];
+    const items = (n && n.items) || [];
+    const fetched = n && n.fetched_at ? new Date(n.fetched_at).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : '';
+    const tierCls = 'tier-' + f.tier;
+    return '<div class="firm-block ' + tierCls + '">' +
+      '<div class="firm-head">' +
+        '<div>' +
+          '<div class="firm-name">' + esc(f.firma) + '</div>' +
+          '<div class="firm-meta">Tier ' + esc(f.tier||'?') + ' · Score ' + Math.round(f.best_score||0) + ' · ' + esc(f.plz_ort||'') + '</div>' +
+        '</div>' +
+        '<div class="firm-meta">' + (fetched ? 'Letztes Update: ' + fetched : 'Noch nicht abgefragt') + '</div>' +
+      '</div>' +
+      (items.length === 0
+        ? '<div class="no-news">' + (n ? 'Keine relevanten News gefunden' : '— News klicken: erst Aktualisierung notwendig') + '</div>'
+        : items.map(it => '<div class="news-item">' +
+            '<a class="news-title" href="' + esc(it.link) + '" target="_blank" rel="noopener">' + esc(it.title) + '</a>' +
+            '<div class="news-meta">' + esc(it.source||'') + (it.date ? ' · ' + esc(it.date) : '') + '</div>' +
+          '</div>').join('')
+      ) +
+    '</div>';
+  }).join('');
+}
+
+async function refreshNews() {
+  const btn = document.getElementById('refreshBtn');
+  btn.disabled = true;
+  btn.textContent = 'Hole News...';
+  document.getElementById('status').textContent = 'Anfrage laeuft...';
+  // Send Top-25 firms (subrequest limit)
+  const firms = TOP_FIRMS.slice(0, 25).map(f => ({ id: f.id, firma: f.firma }));
+  try {
+    const r = await fetch('/api/news/refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ firms }),
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || 'Fehler');
+    const total = Object.values(j.results || {}).reduce((a,b)=>a+b, 0);
+    const errs = (j.errors||[]).length;
+    document.getElementById('alertBox').innerHTML =
+      '<div class="alert alert-success">News aktualisiert. ' + Object.keys(j.results||{}).length +
+      ' Firmen abgefragt, ' + total + ' News-Items insgesamt' + (errs ? ', ' + errs + ' Fehler' : '') + '.</div>';
+    setTimeout(() => { document.getElementById('alertBox').innerHTML = ''; }, 6000);
+    await loadNews();
+    render();
+  } catch (e) {
+    document.getElementById('alertBox').innerHTML = '<div class="alert alert-error">Fehler: ' + esc(e.message) + '</div>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'News aktualisieren (Top-25)';
+    document.getElementById('status').textContent = '';
+  }
+}
+
+document.getElementById('search').addEventListener('input', render);
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#16a34a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>{{COMPANY_NAME}} Bestandskunden · Vertriebs-Cockpit</title>
+<style>
+:root { --brand: #0a4d8c; --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; --success: #16a34a; --success-dark: #15803d; --success-light: #dcfce7; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.5; }
+.topbar { background: var(--success); color: white; padding: 14px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; }
+.brand { font-weight: 700; font-size: 16px; }
+.brand-sub { font-size: 12px; opacity: 0.85; }
+.back-btn { margin-left: auto; padding: 6px 14px; background: rgba(255,255,255,0.18); color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.container { max-width: 1500px; margin: 0 auto; padding: 24px; }
+.hero { background: linear-gradient(135deg, var(--success-light), #bbf7d0); border-left: 4px solid var(--success); padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; }
+.hero h1 { color: var(--success-dark); font-size: 18px; margin-bottom: 4px; }
+.hero p { color: #14532d; font-size: 13px; }
+.stats { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.stat { background: var(--card); padding: 14px 20px; border-radius: 10px; border: 1px solid var(--border); flex: 1; min-width: 180px; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+.stat-value { font-size: 26px; font-weight: 800; color: var(--success); margin-top: 4px; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.search-bar { background: var(--card); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 14px; }
+.search-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+.table-card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--success); color: white; }
+th { padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr:hover { background: #f0fdf4; }
+.firma-name { font-weight: 600; }
+.firma-loc { font-size: 11px; color: var(--muted); }
+.source-badge { display: inline-block; padding: 2px 7px; border-radius: 5px; font-size: 9px; font-weight: 700; text-transform: uppercase; margin-left: 6px; }
+.source-badge.cockpit { background: #dbeafe; color: #1e40af; }
+.source-badge.konkurenz { background: #fef3c7; color: #92400e; }
+.icon-btn { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px; background: white; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); text-decoration: none; font-size: 13px; margin-right: 4px; }
+.icon-btn:hover { background: var(--success); color: white; border-color: var(--success); }
+.empty-state { background: var(--card); padding: 60px 30px; border-radius: 10px; text-align: center; border: 2px dashed var(--border); }
+.empty-state h2 { font-size: 18px; margin-bottom: 8px; }
+.empty-state p { color: var(--muted); font-size: 14px; max-width: 480px; margin: 0 auto; }
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+.meta-info { font-size: 11px; color: var(--muted); }
+.footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; margin-top: 24px; }
+.footer strong { color: var(--brand); }
+.footer a { color: var(--brand); text-decoration: none; }
+
+/* ============================
+   MOBILE OPTIMIZATIONS
+   ============================ */
+@media (max-width: 768px) {
+  /* Topbar — kompakt, wrap */
+  .topbar {
+    padding: 10px 14px !important;
+    gap: 10px !important;
+    flex-wrap: wrap;
+  }
+  .brand { font-size: 14px !important; }
+  .brand-sub { display: none; }
+  .topbar-stats {
+    width: 100%;
+    order: 3;
+    margin-left: 0 !important;
+    font-size: 11px !important;
+    gap: 12px !important;
+  }
+  .user-display {
+    padding: 3px 10px 3px 3px !important;
+    font-size: 11px !important;
+  }
+  .user-avatar { width: 22px !important; height: 22px !important; font-size: 10px !important; }
+  .user-name { display: none; }
+  .logout-btn { padding: 5px 10px !important; font-size: 11px !important; }
+
+  /* Container */
+  .container { padding: 12px 10px !important; }
+
+  /* KPI Grid — 2 cols on mobile, kompakt */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; margin-bottom: 12px !important; }
+  .kpi { padding: 10px 12px !important; }
+  .kpi.active { padding: 9px 11px !important; }
+  .kpi-label { font-size: 10px !important; }
+  .kpi-value { font-size: 22px !important; }
+  .kpi-sub { font-size: 10px !important; }
+
+  /* Preset bar — horizontal scroll */
+  .preset-bar {
+    padding: 10px 12px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .preset-label { font-size: 10px !important; flex-shrink: 0; }
+  .preset-btn { padding: 6px 10px !important; font-size: 11px !important; flex-shrink: 0; white-space: nowrap; }
+
+  /* Toolbar */
+  .toolbar { padding: 10px 12px !important; }
+  .search-input { padding: 12px 14px 12px 36px !important; font-size: 16px !important; /* prevent iOS zoom */ }
+  .csv-btn, .reset-btn { padding: 12px 14px !important; font-size: 13px !important; min-height: 44px; }
+  .filter-section { gap: 14px !important; }
+  .filter-group { min-width: 100% !important; }
+  .chip { padding: 7px 14px !important; font-size: 12px !important; min-height: 36px; }
+  .chip .count { font-size: 9px !important; }
+
+  /* Result info */
+  .result-info { padding: 10px 14px !important; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 11px !important; }
+  .help-tip { display: none; }
+
+  /* Table — mobile scrollable, touch optimized */
+  .table-wrap { max-height: calc(100vh - 380px) !important; }
+  table { font-size: 11.5px !important; }
+  th { padding: 8px 8px !important; font-size: 9.5px !important; }
+  td { padding: 7px 8px !important; }
+  .firma-name { font-size: 12px !important; }
+  .firma-loc { font-size: 10px !important; }
+  .badge { padding: 2px 7px !important; font-size: 10px !important; min-width: 22px !important; }
+  .branche-tag { font-size: 9px !important; padding: 1px 5px !important; }
+  th.score-col { padding: 8px 3px !important; min-width: 28px !important; }
+  td.score-cell { padding: 6px 3px !important; }
+  .score-pill { padding: 1px 6px !important; font-size: 10px !important; min-width: 22px !important; }
+  .icon-btn { width: 32px !important; height: 32px !important; font-size: 14px !important; }
+  .row-actions { gap: 5px !important; }
+  /* Sticky cols still work but smaller shadow */
+  td.sticky-left, td.sticky-right { box-shadow: 0 0 4px rgba(0,0,0,0.08); }
+
+  /* Modal — full screen on mobile */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal {
+    max-width: 100% !important;
+    max-height: 95vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    animation: modalInUp 0.25s ease-out !important;
+  }
+  @keyframes modalInUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header { padding: 16px 18px !important; }
+  .modal-title { font-size: 16px !important; }
+  .modal-sub { font-size: 12px !important; }
+  .modal-close { width: 36px !important; height: 36px !important; }
+  .modal-body { padding: 16px 18px !important; }
+  .modal-section { margin-bottom: 16px !important; }
+  .modal-section h4 { font-size: 10px !important; }
+  .info-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .info-item { padding: 10px 12px !important; }
+  .info-item .lbl { font-size: 10px !important; }
+  .info-item .val { font-size: 13px !important; }
+  .score-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+  .score-card { padding: 8px 10px !important; }
+  .score-card .nm { font-size: 10px !important; }
+  .score-card .sc { font-size: 16px !important; }
+  .modal-actions { padding: 12px 18px !important; gap: 6px !important; flex-direction: column; }
+  .modal-action-btn { width: 100%; justify-content: center; padding: 12px 14px !important; font-size: 13px !important; min-height: 44px; }
+
+  /* Status select buttons - touch friendly */
+  .status-option { padding: 9px 14px !important; font-size: 12px !important; min-height: 36px; }
+
+  /* Notes — mobile */
+  .note-textarea { font-size: 16px !important; }
+  .note-input-row { flex-direction: column; align-items: stretch; gap: 6px !important; }
+  .note-date { width: 100%; padding: 10px 12px !important; font-size: 14px !important; min-height: 40px; }
+  .note-save-btn { padding: 12px 16px !important; font-size: 14px !important; min-height: 44px; }
+  .note-item { padding: 10px 12px !important; }
+  .note-text { font-size: 12.5px !important; }
+
+  /* Email tabs - horizontal scroll */
+  .email-tabs { overflow-x: auto; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .email-tab { flex-shrink: 0; white-space: nowrap; padding: 8px 12px !important; font-size: 11px !important; }
+  .email-preview { padding: 12px 14px !important; font-size: 12px !important; }
+  .email-actions { flex-direction: column; }
+  .email-action { width: 100%; justify-content: center; padding: 11px 14px !important; min-height: 44px; }
+
+  /* Footer */
+  .footer { padding: 18px 12px !important; font-size: 11px !important; }
+
+  /* Toast — bigger on mobile */
+  .toast { left: 12px !important; right: 12px !important; transform: translateY(100px) !important; max-width: none !important; }
+  .toast.show { transform: translateY(0) !important; }
+
+  /* Konkurenz / Kunden specific */
+  .stats { gap: 8px !important; }
+  .stat { min-width: calc(50% - 4px) !important; padding: 10px 12px !important; }
+  .stat-value { font-size: 22px !important; }
+  .legend-row { font-size: 11px !important; }
+  .class-toggle { gap: 3px !important; }
+  .class-btn { padding: 6px 9px !important; font-size: 10px !important; min-height: 32px; }
+  .reason { font-size: 10px !important; max-width: 200px !important; }
+  .source-badge { font-size: 8px !important; padding: 2px 5px !important; }
+  .empty-state { padding: 40px 20px !important; }
+  .empty-state h2 { font-size: 16px !important; }
+  .empty-state p { font-size: 13px !important; }
+}
+
+/* Very small phones (< 380px) */
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+  .stat { min-width: 100% !important; }
+}
+
+/* Touch device improvements */
+@media (hover: none) {
+  .stat:hover, .kpi:hover { transform: none !important; }
+  .chip:hover { background: white; }
+  .chip.active:hover { background: var(--brand); color: white; }
+}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span style="font-size:24px">✓</span>
+  <div><span class="brand">Bestandskunden</span> <span class="brand-sub">— aus Cockpit + Konkurrenz-Liste</span></div>
+  <a class="back-btn" href="/">← Zurück zum Cockpit</a>
+</div>
+<div class="container">
+  <div class="hero">
+    <h1>✓ Bestandskunden</h1>
+    <p>Hier erscheinen automatisch Firmen mit Status <strong>"Kunde"</strong>. Quellen: Akquise-Cockpit (Pipeline-Status) <em>und</em> Konkurrenz-Liste (Bewertung "Kunde").</p>
+  </div>
+  <div class="stats" id="stats" style="display:none">
+    <div class="stat"><div class="stat-label">Kunden gesamt</div><div class="stat-value" id="stat-total">0</div><div class="stat-sub">Beide Quellen</div></div>
+    <div class="stat"><div class="stat-label">Aus Cockpit</div><div class="stat-value" id="stat-cockpit">0</div><div class="stat-sub">Pipeline-Status</div></div>
+    <div class="stat"><div class="stat-label">Aus Konkurrenz</div><div class="stat-value" id="stat-konk">0</div><div class="stat-sub">Manuell markiert</div></div>
+    <div class="stat"><div class="stat-label">Sichtbar</div><div class="stat-value" id="stat-visible">0</div><div class="stat-sub">Aktuelle Suche</div></div>
+  </div>
+  <div class="search-bar" id="search-bar" style="display:none">
+    <input type="text" class="search-input" id="search" placeholder="Suche: Firma, Stadt, Branche..." autocomplete="off">
+  </div>
+  <div id="content">
+    <div class="empty-state"><div class="icon">⏳</div><h2>Lade Bestandskunden...</h2></div>
+  </div>
+  <div class="footer">
+    <p><strong>Vertriebs-Cockpit Pro</strong> · Bestandskunden</p>
+    <p style="margin-top:6px">Entwickelt von <strong>Hasi Elektronic</strong> · <a href="https://www.hasi-elektronic.de" target="_blank">www.hasi-elektronic.de</a></p>
+  </div>
+</div>
+<script>
+const state = { search: '', kunden: [] };
+function esc(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normUrl(u) { if (!u) return '#'; if (/^https?:\/\//.test(u)) return u; return 'https://' + u; }
+
+async function loadKunden() {
+  try {
+    const [indexRes, statusRes, konkRes, konkClassRes] = await Promise.all([
+      fetch('/?nc=' + Date.now(), { cache: 'no-store' }),
+      fetch('/api/status?nc=' + Date.now(), { cache: 'no-store' }),
+      fetch('/konkurenz?nc=' + Date.now(), { cache: 'no-store' }),
+      fetch('/api/konk-class?nc=' + Date.now(), { cache: 'no-store' }),
+    ]);
+
+    // Source 1: Cockpit leads with status="Kunde"
+    const indexHtml = await indexRes.text();
+    const m = indexHtml.match(/const DATA = (\{[\s\S]+?\});/);
+    let cockpitKunden = [];
+    if (m) {
+      const DATA = JSON.parse(m[1]);
+      const leads = DATA.leads || [];
+      const statuses = (await statusRes.json()).statuses || {};
+      for (const lead of leads) {
+        const s = statuses[lead.id];
+        if (s && s.status === 'Kunde') cockpitKunden.push(Object.assign({}, lead, { _status: s, _source: 'cockpit' }));
+      }
+    }
+
+    // Source 2: Konkurrenz with classification="kunde"
+    const konkHtml = await konkRes.text();
+    const km = konkHtml.match(/const KONK = (\[[\s\S]+?\]);/);
+    let konkKunden = [];
+    if (km) {
+      const KONK = JSON.parse(km[1]);
+      const overrides = (await konkClassRes.json()).overrides || {};
+      const slugify = s => (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80);
+      for (const k of KONK) {
+        const slug = slugify(k.firma);
+        const ov = overrides[slug];
+        if (ov && ov.classification === 'kunde') {
+          konkKunden.push({
+            firma: k.firma, plz_ort: k.plz_ort, web: k.web, tel: k.tel, mail: k.mail,
+            branchen: [k.branche_de || ''], bundesland: '?',
+            _status: { ts: ov.ts, by_name: ov.by_name || '?' },
+            _source: 'konkurenz',
+          });
+        }
+      }
+    }
+
+    state.kunden = [...cockpitKunden, ...konkKunden];
+    state.cockpitCount = cockpitKunden.length;
+    state.konkCount = konkKunden.length;
+    render();
+  } catch (e) {
+    console.error('Load error:', e);
+    document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">⚠️</div><h2>Fehler beim Laden</h2><p>' + esc(e.message) + '</p></div>';
+  }
+}
+
+function render() {
+  const total = state.kunden.length;
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-cockpit').textContent = state.cockpitCount || 0;
+  document.getElementById('stat-konk').textContent = state.konkCount || 0;
+
+  if (total === 0) {
+    document.getElementById('content').innerHTML = '<div class="empty-state"><div class="icon">📋</div><h2>Noch keine Bestandskunden</h2><p>Markiere Firmen als <strong>"Kunde"</strong>: entweder im Cockpit (Pipeline-Status) oder in der Konkurrenz-Liste (Bewertung "✓ KUNDE"). Sie erscheinen dann automatisch hier.</p></div>';
+    document.getElementById('stats').style.display = 'none';
+    document.getElementById('search-bar').style.display = 'none';
+    return;
+  }
+  document.getElementById('stats').style.display = 'flex';
+  document.getElementById('search-bar').style.display = 'block';
+
+  let list = state.kunden.slice();
+  if (state.search) {
+    const s = state.search.toLowerCase();
+    list = list.filter(k => (k.firma||'').toLowerCase().includes(s) || (k.plz_ort||'').toLowerCase().includes(s) || (k.branchen||[]).some(b => (b||'').toLowerCase().includes(s)));
+  }
+  list.sort((a,b) => (a.firma||'').toLowerCase().localeCompare((b.firma||'').toLowerCase()));
+  document.getElementById('stat-visible').textContent = list.length;
+
+  let html = '<div class="table-card"><table><thead><tr><th>Firma</th><th>Quelle</th><th>Branchen</th><th>Standort</th><th>Web</th><th>Kontakt</th><th>Markiert seit</th></tr></thead><tbody>';
+  for (const k of list) {
+    const branchen = (k.branchen||[]).filter(b => b).map(b => '<span style="background:#dcfce7;color:#15803d;padding:1px 7px;margin:1px;border-radius:6px;font-size:10px;font-weight:600">' + esc(b) + '</span>').join(' ') || '–';
+    const web = k.web ? '<a href="' + normUrl(k.web) + '" target="_blank" style="color:var(--success);font-size:12px">' + esc(k.web) + '</a>' : '–';
+    const tel = k.tel ? '<a class="icon-btn" href="tel:' + esc(k.tel) + '">☎</a>' : '';
+    const mail = k.mail ? '<a class="icon-btn" href="mailto:' + esc(k.mail) + '">✉</a>' : '';
+    const since = k._status && k._status.ts ? new Date(k._status.ts).toLocaleDateString('de-DE') : '–';
+    const by = (k._status && k._status.by_name) || '?';
+    const sourceBadge = k._source === 'konkurenz' ? '<span class="source-badge konkurenz">⚠ Aus Konkurrenz</span>' : '<span class="source-badge cockpit">📊 Cockpit</span>';
+    html += '<tr><td><div class="firma-name">' + esc(k.firma) + '</div><div class="firma-loc">' + esc(k.plz_ort) + '</div></td><td>' + sourceBadge + '</td><td>' + branchen + '</td><td>' + esc(k.plz_ort) + '</td><td>' + web + '</td><td>' + tel + mail + '</td><td class="meta-info">' + since + '<br><small>' + esc(by) + '</small></td></tr>';
+  }
+  html += '</tbody></table></div>';
+  document.getElementById('content').innerHTML = html;
+}
+
+document.getElementById('search').addEventListener('input', e => { state.search = e.target.value.trim(); render(); });
+loadKunden();
+</script>
+</body>
+</html>

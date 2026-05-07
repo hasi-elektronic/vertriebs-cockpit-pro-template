@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#dc2626">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>{{COMPANY_NAME}} Konkurrenten · Vertriebs-Cockpit</title>
+<style>
+:root { --brand: #0a4d8c; --bg: #f1f5f9; --card: #ffffff; --border: #e2e8f0; --text: #0f172a; --muted: #64748b; --danger: #dc2626; --warn: #f59e0b; --neutral: #94a3b8; --possible: #2563eb; --success: #16a34a; --success-dark: #15803d; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--text); background: var(--bg); line-height: 1.5; }
+.topbar { background: var(--danger); color: white; padding: 14px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; }
+.brand { font-weight: 700; font-size: 16px; }
+.brand-sub { font-size: 12px; opacity: 0.85; }
+.back-btn { margin-left: auto; padding: 6px 14px; background: rgba(255,255,255,0.18); color: white; text-decoration: none; border-radius: 6px; font-size: 12px; font-weight: 600; }
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.container { max-width: 1700px; margin: 0 auto; padding: 24px; }
+.hero { background: linear-gradient(135deg, #fef3c7, #fde68a); border-left: 4px solid var(--warn); padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; }
+.hero h1 { color: #92400e; font-size: 18px; margin-bottom: 4px; }
+.hero p { color: #78350f; font-size: 13px; }
+.stats { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+.stat { background: var(--card); padding: 14px 18px; border-radius: 10px; border: 1px solid var(--border); flex: 1; min-width: 140px; cursor: pointer; transition: all 0.15s; }
+.stat:hover { transform: translateY(-2px); }
+.stat.active { border-width: 2px; padding: 13px 17px; }
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+.stat-value { font-size: 26px; font-weight: 800; margin-top: 4px; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.stat.all .stat-value { color: var(--text); }
+.stat.direct .stat-value { color: var(--danger); }
+.stat.possible .stat-value { color: var(--possible); }
+.stat.neutral .stat-value { color: var(--neutral); }
+.stat.kunde .stat-value { color: var(--success); }
+.search-bar { background: var(--card); padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 14px; }
+.search-input { width: 100%; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; }
+.table-card { background: var(--card); border-radius: 10px; border: 1px solid var(--border); overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: var(--brand); color: white; position: sticky; top: 0; }
+th { padding: 12px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; }
+th:hover { background: #073661; }
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tbody tr.row-direct { background: #fef2f2; }
+tbody tr.row-possible-lead { background: #eff6ff; }
+tbody tr.row-neutral { background: #f8fafc; }
+tbody tr.row-kunde { background: #f0fdf4; }
+.firma-name { font-weight: 600; color: var(--text); }
+.firma-loc { font-size: 11px; color: var(--muted); }
+.class-toggle { display: flex; gap: 4px; flex-wrap: wrap; }
+.class-btn { padding: 4px 9px; border: 1px solid var(--border); border-radius: 14px; font-size: 11px; font-weight: 600; cursor: pointer; background: white; color: var(--muted); user-select: none; transition: all 0.15s; white-space: nowrap; }
+.class-btn:hover { border-color: var(--brand); }
+.class-btn.active.direct { background: var(--danger); color: white; border-color: var(--danger); }
+.class-btn.active.possible-lead { background: var(--possible); color: white; border-color: var(--possible); }
+.class-btn.active.neutral { background: var(--neutral); color: white; border-color: var(--neutral); }
+.class-btn.active.kunde { background: var(--success); color: white; border-color: var(--success); box-shadow: 0 0 0 2px #bbf7d0; }
+.override-mark { display: inline-block; margin-left: 6px; font-size: 9px; color: var(--warn); font-weight: 700; }
+.reason { font-size: 11px; color: var(--muted); line-height: 1.3; max-width: 240px; }
+.icon-btn { width: 26px; height: 26px; border: 1px solid var(--border); border-radius: 6px; background: white; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); text-decoration: none; font-size: 13px; margin-right: 4px; }
+.icon-btn:hover { background: var(--brand); color: white; border-color: var(--brand); }
+.footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; margin-top: 24px; }
+.footer strong { color: var(--brand); }
+.footer a { color: var(--brand); text-decoration: none; }
+.legend { background: var(--card); padding: 12px 18px; border-radius: 10px; border: 1px solid var(--border); margin-bottom: 14px; font-size: 12px; }
+.legend-row { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+.classification { display: inline-block; padding: 3px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; color: white; white-space: nowrap; }
+.classification.direct { background: var(--danger); }
+.classification.possible-lead { background: var(--possible); }
+.classification.neutral { background: var(--neutral); }
+.classification.kunde { background: var(--success); }
+.toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text); color: white; padding: 12px 20px; border-radius: 8px; font-size: 14px; z-index: 200; transition: transform 0.25s; opacity: 0; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+/* ============================
+   MOBILE OPTIMIZATIONS
+   ============================ */
+@media (max-width: 768px) {
+  /* Topbar — kompakt, wrap */
+  .topbar {
+    padding: 10px 14px !important;
+    gap: 10px !important;
+    flex-wrap: wrap;
+  }
+  .brand { font-size: 14px !important; }
+  .brand-sub { display: none; }
+  .topbar-stats {
+    width: 100%;
+    order: 3;
+    margin-left: 0 !important;
+    font-size: 11px !important;
+    gap: 12px !important;
+  }
+  .user-display {
+    padding: 3px 10px 3px 3px !important;
+    font-size: 11px !important;
+  }
+  .user-avatar { width: 22px !important; height: 22px !important; font-size: 10px !important; }
+  .user-name { display: none; }
+  .logout-btn { padding: 5px 10px !important; font-size: 11px !important; }
+
+  /* Container */
+  .container { padding: 12px 10px !important; }
+
+  /* KPI Grid — 2 cols on mobile, kompakt */
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; margin-bottom: 12px !important; }
+  .kpi { padding: 10px 12px !important; }
+  .kpi.active { padding: 9px 11px !important; }
+  .kpi-label { font-size: 10px !important; }
+  .kpi-value { font-size: 22px !important; }
+  .kpi-sub { font-size: 10px !important; }
+
+  /* Preset bar — horizontal scroll */
+  .preset-bar {
+    padding: 10px 12px !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .preset-label { font-size: 10px !important; flex-shrink: 0; }
+  .preset-btn { padding: 6px 10px !important; font-size: 11px !important; flex-shrink: 0; white-space: nowrap; }
+
+  /* Toolbar */
+  .toolbar { padding: 10px 12px !important; }
+  .search-input { padding: 12px 14px 12px 36px !important; font-size: 16px !important; /* prevent iOS zoom */ }
+  .csv-btn, .reset-btn { padding: 12px 14px !important; font-size: 13px !important; min-height: 44px; }
+  .filter-section { gap: 14px !important; }
+  .filter-group { min-width: 100% !important; }
+  .chip { padding: 7px 14px !important; font-size: 12px !important; min-height: 36px; }
+  .chip .count { font-size: 9px !important; }
+
+  /* Result info */
+  .result-info { padding: 10px 14px !important; flex-direction: column; align-items: flex-start; gap: 4px; font-size: 11px !important; }
+  .help-tip { display: none; }
+
+  /* Table — mobile scrollable, touch optimized */
+  .table-wrap { max-height: calc(100vh - 380px) !important; }
+  table { font-size: 11.5px !important; }
+  th { padding: 8px 8px !important; font-size: 9.5px !important; }
+  td { padding: 7px 8px !important; }
+  .firma-name { font-size: 12px !important; }
+  .firma-loc { font-size: 10px !important; }
+  .badge { padding: 2px 7px !important; font-size: 10px !important; min-width: 22px !important; }
+  .branche-tag { font-size: 9px !important; padding: 1px 5px !important; }
+  th.score-col { padding: 8px 3px !important; min-width: 28px !important; }
+  td.score-cell { padding: 6px 3px !important; }
+  .score-pill { padding: 1px 6px !important; font-size: 10px !important; min-width: 22px !important; }
+  .icon-btn { width: 32px !important; height: 32px !important; font-size: 14px !important; }
+  .row-actions { gap: 5px !important; }
+  /* Sticky cols still work but smaller shadow */
+  td.sticky-left, td.sticky-right { box-shadow: 0 0 4px rgba(0,0,0,0.08); }
+
+  /* Modal — full screen on mobile */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
+  .modal {
+    max-width: 100% !important;
+    max-height: 95vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    animation: modalInUp 0.25s ease-out !important;
+  }
+  @keyframes modalInUp { from { opacity: 0; transform: translateY(100%); } to { opacity: 1; transform: translateY(0); } }
+  .modal-header { padding: 16px 18px !important; }
+  .modal-title { font-size: 16px !important; }
+  .modal-sub { font-size: 12px !important; }
+  .modal-close { width: 36px !important; height: 36px !important; }
+  .modal-body { padding: 16px 18px !important; }
+  .modal-section { margin-bottom: 16px !important; }
+  .modal-section h4 { font-size: 10px !important; }
+  .info-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+  .info-item { padding: 10px 12px !important; }
+  .info-item .lbl { font-size: 10px !important; }
+  .info-item .val { font-size: 13px !important; }
+  .score-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 6px !important; }
+  .score-card { padding: 8px 10px !important; }
+  .score-card .nm { font-size: 10px !important; }
+  .score-card .sc { font-size: 16px !important; }
+  .modal-actions { padding: 12px 18px !important; gap: 6px !important; flex-direction: column; }
+  .modal-action-btn { width: 100%; justify-content: center; padding: 12px 14px !important; font-size: 13px !important; min-height: 44px; }
+
+  /* Status select buttons - touch friendly */
+  .status-option { padding: 9px 14px !important; font-size: 12px !important; min-height: 36px; }
+
+  /* Notes — mobile */
+  .note-textarea { font-size: 16px !important; }
+  .note-input-row { flex-direction: column; align-items: stretch; gap: 6px !important; }
+  .note-date { width: 100%; padding: 10px 12px !important; font-size: 14px !important; min-height: 40px; }
+  .note-save-btn { padding: 12px 16px !important; font-size: 14px !important; min-height: 44px; }
+  .note-item { padding: 10px 12px !important; }
+  .note-text { font-size: 12.5px !important; }
+
+  /* Email tabs - horizontal scroll */
+  .email-tabs { overflow-x: auto; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; }
+  .email-tab { flex-shrink: 0; white-space: nowrap; padding: 8px 12px !important; font-size: 11px !important; }
+  .email-preview { padding: 12px 14px !important; font-size: 12px !important; }
+  .email-actions { flex-direction: column; }
+  .email-action { width: 100%; justify-content: center; padding: 11px 14px !important; min-height: 44px; }
+
+  /* Footer */
+  .footer { padding: 18px 12px !important; font-size: 11px !important; }
+
+  /* Toast — bigger on mobile */
+  .toast { left: 12px !important; right: 12px !important; transform: translateY(100px) !important; max-width: none !important; }
+  .toast.show { transform: translateY(0) !important; }
+
+  /* Konkurenz / Kunden specific */
+  .stats { gap: 8px !important; }
+  .stat { min-width: calc(50% - 4px) !important; padding: 10px 12px !important; }
+  .stat-value { font-size: 22px !important; }
+  .legend-row { font-size: 11px !important; }
+  .class-toggle { gap: 3px !important; }
+  .class-btn { padding: 6px 9px !important; font-size: 10px !important; min-height: 32px; }
+  .reason { font-size: 10px !important; max-width: 200px !important; }
+  .source-badge { font-size: 8px !important; padding: 2px 5px !important; }
+  .empty-state { padding: 40px 20px !important; }
+  .empty-state h2 { font-size: 16px !important; }
+  .empty-state p { font-size: 13px !important; }
+}
+
+/* Very small phones (< 380px) */
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+  .stat { min-width: 100% !important; }
+}
+
+/* Touch device improvements */
+@media (hover: none) {
+  .stat:hover, .kpi:hover { transform: none !important; }
+  .chip:hover { background: white; }
+  .chip.active:hover { background: var(--brand); color: white; }
+}
+
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span style="font-size:24px">⚠️</span>
+  <div><span class="brand">Konkurrenten-Analyse</span> <span class="brand-sub">— Bewertung manuell anpassbar (inkl. Kunde)</span></div>
+  <a class="back-btn" href="/">← Zurück zum Cockpit</a>
+</div>
+<div class="container">
+  <div class="hero">
+    <h1>📊 Konkurrenten — Bewertung anpassen</h1>
+    <p>Klick auf die Buttons in der Spalte "Bewertung" zum Ändern. <strong>"✓ KUNDE"</strong> markiert eine Firma als Bestandskunde — sie wird <strong>aus dieser Liste entfernt</strong> und erscheint nur noch unter <a href="/kunden" style="color:var(--success);font-weight:700">Kunden</a>. Klick auf den Filter <strong>"Kunde ✓"</strong> oben, um die markierten Firmen wiederzusehen.</p>
+  </div>
+  <div class="legend">
+    <div class="legend-row">
+      <div><span class="classification direct">DIREKT</span> = Wettbewerber</div>
+      <div><span class="classification possible-lead">MÖGLICH</span> = Lohnfertigung-Lead</div>
+      <div><span class="classification neutral">NEUTRAL</span> = Handel/Install.</div>
+      <div><span class="classification kunde">KUNDE ✓</span> = Bestandskunde (auf /kunden sichtbar)</div>
+      <div style="margin-left:auto;color:var(--muted);font-size:11px">⭐ = manuell überschrieben</div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat all active" data-cat="all"><div class="stat-label">Alle</div><div class="stat-value" id="s-all">–</div><div class="stat-sub">Konkurrenz</div></div>
+    <div class="stat direct" data-cat="direct"><div class="stat-label">Direkt</div><div class="stat-value" id="s-direct">–</div><div class="stat-sub">Nicht kontakt.</div></div>
+    <div class="stat possible" data-cat="possible-lead"><div class="stat-label">Möglich 🎯</div><div class="stat-value" id="s-possible">–</div><div class="stat-sub">Lohnfertigung</div></div>
+    <div class="stat neutral" data-cat="neutral"><div class="stat-label">Neutral</div><div class="stat-value" id="s-neutral">–</div><div class="stat-sub">Handel</div></div>
+    <div class="stat kunde" data-cat="kunde"><div class="stat-label">Kunde ✓</div><div class="stat-value" id="s-kunde">–</div><div class="stat-sub">Bestandskunde</div></div>
+  </div>
+  <div class="search-bar">
+    <input type="text" class="search-input" id="search" placeholder="Suche: Firma, Stadt, Branche..." autocomplete="off">
+  </div>
+  <div class="table-card">
+    <table>
+      <thead><tr>
+        <th data-sort="firma">Firma</th>
+        <th data-sort="branche_de">Branche</th>
+        <th>Bewertung</th>
+        <th>Begründung</th>
+        <th data-sort="plz_ort">Ort</th>
+        <th>Web</th>
+        <th>Kontakt</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+  <div class="footer">
+    <p><strong>Vertriebs-Cockpit Pro</strong> · Konkurrenten-Analyse v4 (Override + Kunde)</p>
+    <p style="margin-top:6px">Entwickelt von <strong>Hasi Elektronic</strong> · <a href="https://www.hasi-elektronic.de" target="_blank">www.hasi-elektronic.de</a></p>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const KONK = [{"firma":"Elektrobau Mulfingen GmbH & Co. KGaA","plz_ort":"74673 Mulfingen","web":"www.ebmpapst.com","tel":"+49 7938 81-0","mail":"info1@de.ebmpapst.com","branche_de":"Auftragsfertiger Mechanik","classification":"direct","classification_reason":"DIREKT: bietet selbst Lohnfertigung an"},{"firma":"Stulz Verwaltungs GmbH & Co. KG","plz_ort":"22457 Hamburg","web":"www.stulz.com","tel":"+49 40 5585-0","mail":"info@stulz.de","branche_de":"Auftragsfertiger Mechanik","classification":"direct","classification_reason":"DIREKT: bietet selbst Lohnfertigung an"},{"firma":"TROX SE","plz_ort":"47506 Neukirchen","web":"www.trox.de","tel":"+49 (0)2845/202-0","mail":"trox-de@troxgroup.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"ZIEHL-ABEGG SE","plz_ort":"74653 Künzelsau","web":"www.ziehl-abegg.com","tel":"+49 7940 16 0","mail":"info@ziehl-abegg.de","branche_de":"Maschinenteile-Hersteller","classification":"possible-lead","classification_reason":"Hersteller von Maschinenteilen — Lohnfertigung-Kanal"},{"firma":"Wolf GmbH","plz_ort":"84048 Mainburg","web":"www.wolf.eu/de-de","tel":"+49 (0) 8751 74-0","mail":"info@wolf.eu","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"ebm-papst Landshut GmbH","plz_ort":"84030 Landshut","web":"www.ebmpapst.com","tel":"+49 871 707-0","mail":"info3@de.ebmpapst.com","branche_de":"Auftragsfertiger Mechanik","classification":"direct","classification_reason":"DIREKT: bietet selbst Lohnfertigung an"},{"firma":"Trane Technologies GmbH","plz_ort":"Oberhausen, Nordrhein-westfalen","web":"www.trane.eu/de","tel":"","mail":"Registracija","branche_de":"Niederlassung / Büro","classification":"neutral","classification_reason":"Nur Niederlassung — kein Produktionsstandort"},{"firma":"Weiss Technik GmbH","plz_ort":"35447 Reiskirchen","web":"www.weiss-technik.com","tel":"+49 6408 84-0","mail":"info@w­eiss-technik.com","branche_de":"Maschinenbau","classification":"possible-lead","classification_reason":"Maschinenbau — Lohnfertigung möglich"},{"firma":"Howden Turbo GmbH","plz_ort":"67227 Frankenthal","web":"www.de.chartindustries.com","tel":"+49 6233 85 0","mail":"Registracija","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Siegle + Epple GmbH & Co. KG","plz_ort":"70499 Stuttgart","web":"www.siegleundepple.de","tel":"+49 711 8808-0","mail":"info@siegleundepple.de","branche_de":"Niederlassung / Büro","classification":"neutral","classification_reason":"Nur Niederlassung — kein Produktionsstandort"},{"firma":"robatherm GmbH & Co KG","plz_ort":"89343 Jettingen-Scheppach","web":"www.robatherm.com/de/","tel":"+49 8222 999-0","mail":"info@robatherm.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Thermofin GmbH","plz_ort":"08468 Heinsdorfergrund","web":"www.thermofin.de","tel":"+49 (0) 3765 / 38 00 -0","mail":"info@thermofin.de","branche_de":"HKL-Ausführer / Installateur","classification":"possible-lead","classification_reason":"HKL-Installateur — kauft Komponenten ein"},{"firma":"Kampmann GmbH & Co. KG","plz_ort":"49811 Lingen","web":"www.kampmann.de","tel":"+49 591 7108-0","mail":"info@kampmann.de","branche_de":"HKL-Ausführer / Installateur","classification":"possible-lead","classification_reason":"HKL-Installateur — kauft Komponenten ein"},{"firma":"Romakowski GmbH & Co. KG","plz_ort":"86647 Buttenwiesen","web":"www.romakowski.com","tel":"+49 (0) 8274.999-0","mail":"info@romakowski.com","branche_de":"Baustoffhandel","classification":"neutral","classification_reason":"Reiner Handel"},{"firma":"Maico Holding GmbH","plz_ort":"78056 Villingen-Schwenningen","web":"www.maico-ventilatoren.com","tel":"+49 (0) 77 20 / 6 94 - 0","mail":"info@maico.de","branche_de":"Lüftungstechnik-Hersteller","classification":"direct","classification_reason":"DIREKT: Lüftungstechnik-Konkurrenz"},{"firma":"Systemair GmbH","plz_ort":"97944 Boxberg","web":"www.systemair.com/de-de","tel":"+49 7930 9272-0","mail":"info@systemair.de","branche_de":"Lüftungstechnik-Hersteller","classification":"direct","classification_reason":"DIREKT: Lüftungstechnik-Konkurrenz"},{"firma":"Piller Blowers & Compressors GmbH","plz_ort":"37186 Moringen","web":"www.piller.de/de/","tel":"+49 5554 201-0","mail":"pbc-info@piller.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Rosenberg Ventilatoren GmbH","plz_ort":"74653 Künzelsau","web":"www.rosenberg-gmbh.com","tel":"+49 (0) 7940 / 142-0","mail":"info@rosenberg-gmbh.com","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Hanning Elektro-Werke GmbH & Co. KG","plz_ort":"33813 Oerlinghausen","web":"www.hanning-hew.com/de/","tel":"+49 (5202) 707-0","mail":"info@hanning-hew.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"BerlinerLuft. Holding GmbH","plz_ort":"10365 Berlin","web":"www.berlinerluft.de","tel":"0049 30/ 55 26 0","mail":"info@berlinerluft.de","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"FläktGroup Wurzen GmbH","plz_ort":"44623 Herne","web":"www.flaktgroup.com/de/","tel":"+49 2323 6236 00","mail":"info.de@flaktgroup.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Reitz Holding GmbH & Co KG","plz_ort":"37671 Höxter-Albaxen","web":"www.reitzgroup.com","tel":"+49 (5271) 964 000","mail":"info@reitzgroup.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Carrier Klimatechnik GmbH","plz_ort":"85748 Garching","web":"www.carrier.com/commercial/de/de/","tel":"0049 89/32154-0","mail":"carrier.gmbh@carrier.com","branche_de":"Klima-Monteur","classification":"neutral","classification_reason":"Installateur, keine Produktion"},{"firma":"TLT-Turbo GmbH","plz_ort":"66482 Zweibrücken","web":"www.tlt-turbo.com/de/","tel":"+49 6332 808-0","mail":"tlt@tlt-turbo.com","branche_de":"Industrieausrüstungs-Lieferant","classification":"neutral","classification_reason":"Reiner Lieferant/Händler"},{"firma":"RIPPERT GmbH & Co. KG","plz_ort":"33442 Herzebrock-Clarholz","web":"www.rippert.de","tel":"+49 5245 901 0","mail":"info@rippert.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Bernd Münstermann GmbH & Co. KG","plz_ort":"48291 Telgte-Westbevern","web":"www.muenstermann.com","tel":"+49 2504 9800-0","mail":"info@muenstermann.com","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"COLT INTERNATIONAL GmbH","plz_ort":"47533 Kleve","web":"www.colt.info/de/de/","tel":"0049 28219900","mail":"colt-info@de.coltgroup.com","branche_de":"Brandschutz-Lieferant","classification":"possible-lead","classification_reason":"Brandschutz — könnte Schallhauben/Bleche brauchen"},{"firma":"Ventilatorenfabrik Oelde, Gesellschaft mit beschränkter Haftung","plz_ort":"59302 Oelde","web":"www.venti-oelde.de","tel":"+49 25 22/75-0","mail":"info@venti-oelde.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Venjakob Maschinenbau GmbH & Co. Kommanditgesellschaft","plz_ort":"33378 Rheda-Wiedenbrück","web":"www.venjakob.de","tel":"+49 5242 9603-0","mail":"info@venjakob.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"stela Laxhuber GmbH","plz_ort":"84323 Massing","web":"www.stela.de","tel":"+49 8724 899-0","mail":"office@stela.de","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Höcker Polytechnik GmbH","plz_ort":"49176 Hilter a.T.W.","web":"www.hoecker-polytechnik.de","tel":"+49 (0) 5409 / 405 - 0","mail":"info@hpt.net","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Keller Lufttechnik GmbH + Co.KG","plz_ort":"73230 Kirchheim unter Teck","web":"www.keller-lufttechnik.de","tel":"+49 7021 574-0","mail":"info@keller-lufttechnik.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Wildeboer Bauteile GmbH","plz_ort":"26826 Weener","web":"www.wildeboer.de/de","tel":"+49 4951 950-0","mail":"info@wildeboer.de","branche_de":"Brandschutz-Lieferant","classification":"possible-lead","classification_reason":"Brandschutz — könnte Schallhauben/Bleche brauchen"},{"firma":"Zehnder GmbH","plz_ort":"77933 Lahr","web":"www.zehnder-systems.de/de","tel":"0049 7821 586 - 0","mail":"info@zehnder-systems.de","branche_de":"HKL-Ausführer / Installateur","classification":"possible-lead","classification_reason":"HKL-Installateur — kauft Komponenten ein"},{"firma":"Elektror airsystems GmbH","plz_ort":"73760 Ostfildern","web":"www.elektror.com/de/","tel":"+49 711 31 97 30","mail":"info@elektror.de","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Turbo - Lufttechnik GmbH","plz_ort":"66482 Zweibrücken","web":"www.tlt-turbo.com","tel":"+49 6332 808-0","mail":"tlt@tlt-turbo.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Nicotra Gebhardt GmbH","plz_ort":"74638 Waldenburg","web":"www.nicotra-gebhardt.com/de/","tel":"+49 7942 101 0","mail":"info.ng.de@regalrexnord.com","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"Helios Ventilatoren GmbH + Co KG","plz_ort":"78056 Villingen-Schwenningen","web":"www.heliosventilatoren.de","tel":"+49 7720 606-0","mail":"info@heliosventilatoren.de","branche_de":"HKL-Ausführer / Installateur","classification":"possible-lead","classification_reason":"HKL-Installateur — kauft Komponenten ein"},{"firma":"Konrad Reitz Ventilatoren GmbH. & Co. KG.","plz_ort":"37671 Höxter","web":"www.reitzgroup.com","tel":"+49 (5271) 964 000","mail":"info@reitzgroup.com","branche_de":"Maschinenbau","classification":"possible-lead","classification_reason":"Maschinenbau — Lohnfertigung möglich"},{"firma":"FläktGroup Deutschland GmbH","plz_ort":"44623 Herne","web":"www.flaktgroup.com/de/","tel":"+49 2323 6236 00","mail":"info.de@flaktgroup.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"punker GmbH","plz_ort":"24340 Eckernförde","web":"www.punker.com","tel":"0049 43514720","mail":"info@punker.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Huber & Ranner GmbH","plz_ort":"94060 Pocking","web":"www.huber-ranner.com","tel":"0049 8531 705-0","mail":"info@huber-ranner.com","branche_de":"Maschinenbau-Ingenieur","classification":"possible-lead","classification_reason":"Maschinenbau-Eng — braucht Lohnfertigung"},{"firma":"MENERGA GmbH","plz_ort":"45472 Mülheim an der Ruhr","web":"www.menerga.com/de","tel":"+49 208 9981-0","mail":"vertrieb@menerga.com","branche_de":"Hersteller (allgemein)","classification":"possible-lead","classification_reason":"Hersteller — Lohnfertigung/Spezialteile möglich"},{"firma":"Ness Wärmetechnik GmbH","plz_ort":"73630 Remshalden","web":"www.ness.de/","tel":"+49 7181 9675 1","mail":"info@ness.de","branche_de":"Universalmaschinenbau","classification":"possible-lead","classification_reason":"Maschinenbau — Lohnfertigung möglich"},{"firma":"BW Converting GmbH","plz_ort":"36341 Lauterbach","web":"www.bwconverting.com","tel":"+49 (0) 6641 970-0","mail":"","branche_de":"Universalmaschinenbau","classification":"possible-lead","classification_reason":"Maschinenbau — Lohnfertigung möglich"},{"firma":"NOXMAT GmbH","plz_ort":"09569 Oederan","web":"www.noxmat.com/","tel":"+49 37292 6503 0","mail":"info@noxmat.de","branche_de":"Öfen / Brenner / Heizungstechnik","classification":"possible-lead","classification_reason":"Heiztechnik — Apparatebau-Komponenten möglich"},{"firma":"nordluft Wärme- und Lüftungstechnik GmbH & Co. KG","plz_ort":"49393 Lohne","web":"://www.nordluft.com","tel":"+49 4441 8898 0","mail":"info@nordluft.com","branche_de":"Heiz-/Lüftungssystem-Hersteller","classification":"direct","classification_reason":"DIREKT: Heiz/Lüftung-Konkurrenz"},{"firma":"Baumeister Wärmetechnik GmbH","plz_ort":"78628 Rottweil","web":"www.baumeister-klima.de","tel":"+49 4471 9474 0","mail":"postfach@baumeister-klima.de","branche_de":"Kessel/Wärmetechnik","classification":"possible-lead","classification_reason":"Kesselbau — Drückteile/Lohnfertigung möglich"},{"firma":"Intercal Wärmetechnik GmbH & Co. KG","plz_ort":"32107 Bad Salzuflen","web":"www.intercal.de/","tel":"+49 5222 935 0","mail":"info@intercal.de","branche_de":"Brenner / Wärmepumpen","classification":"possible-lead","classification_reason":"Wärmepumpen — Komponenten möglich"},{"firma":"Klöpper-Therm GmbH","plz_ort":"44143 Dortmund","web":"www.kloepper-therm.de/","tel":"0049 231 5178 0 ","mail":"info@kloepper-therm.de","branche_de":"Elektroheizsysteme","classification":"possible-lead","classification_reason":"Elektroheizung — Lohnfertigung möglich"},{"firma":"Windmüller Technik GmbH","plz_ort":"71522 Backnang","web":"www.windmueller-technik.de/","tel":"0049 7191 34503 0 ","mail":"online@windmueller-sha.de","branche_de":"Heiz-/Lüftungsmonteur","classification":"neutral","classification_reason":"Monteur, keine eigene Fertigung"},{"firma":"Wachtel ABT GmbH","plz_ort":"01833 Stolpen","web":"www.wachtel.de/","tel":"0049 3501 5565 0 ","mail":"info@wachtel.de","branche_de":"Bäckereiöfen","classification":"possible-lead","classification_reason":"Bäckereiöfen — Apparatebau möglich"},{"firma":"Konvekta KKI Kälte- und Klima GmbH & Co. KG","plz_ort":"34613 Schwalmstadt","web":"www.konvekta.de/","tel":"+49 6672 899 0","mail":"info@konvekta.com","branche_de":"Transport-Klimasysteme","classification":"possible-lead","classification_reason":"Fahrzeug-Klima — Komponenten möglich"},{"firma":"Rotamill GmbH","plz_ort":"33758 Schloss Holte-Stukenbrock","web":"www.rotamill.de/","tel":"+49 5205 9115 0","mail":"info@rotamill.de","branche_de":"Luftreinigung & Ventilatoren","classification":"direct","classification_reason":"DIREKT: Ventilatoren & Filter"},{"firma":"Reitz Retrofit GmbH & Co KG","plz_ort":"37671 Höxter","web":"://www.reitzgroup.com","tel":"0049 5271 964 0 ","mail":"info@reitzgroup.com","branche_de":"Service Industrieventilatoren","classification":"possible-lead","classification_reason":"Service — Ersatzteile möglich"},{"firma":"Blauberg Ventilatoren GmbH","plz_ort":"81379 München","web":"www.blaubergventilatoren.de/","tel":"0049 89 7596963 0 ","mail":"info@blaubergventilatoren.de","branche_de":"Lüftungs- & Ventilatorenhersteller","classification":"direct","classification_reason":"DIREKT: Lüftung+Ventilatoren"},{"firma":"ECOPLANT Filtration GmbH","plz_ort":"31157 Sarstedt","web":"www.ecoplant.de/","tel":"0049 5066 69399 0 ","mail":"info@ecoplant.co","branche_de":"Industrie-Filtersysteme","classification":"possible-lead","classification_reason":"Filter — Ventilatoren-Komponenten möglich"},{"firma":"Raab Lüftungstechnik GmbH","plz_ort":"85098 Großmehring","web":"www.lueftungstechnik-raab.de","tel":"+49 (0)8456 92 39 910","mail":"info@lueftungstechnik-raab.de","branche_de":"Lüftungssystem-Errichtung","classification":"possible-lead","classification_reason":"Errichtung — Komponenten-Bedarf"},{"firma":"AURA GmbH & Co. KG","plz_ort":"76726 Germersheim","web":"www.auragmbh.com","tel":"+49 6021 15099 0","mail":"info@auragmbh.com","branche_de":"Prozesswärme/-kühlung","classification":"possible-lead","classification_reason":"Prozesstechnik — Apparatebau-Bedarf"},{"firma":"X-COOLING GmbH","plz_ort":"63768 Hösbach","web":"www.x-cooling.de/","tel":"+49 6021 3496 0","mail":"info@x-cooling.de","branche_de":"Industriekühltürme","classification":"possible-lead","classification_reason":"Kühltürme — Lohnfertigung/Drückteile"},{"firma":"Hombach Wärmetechnik GmbH","plz_ort":"57520 Rosenheim","web":"www.hombach.de","tel":"+49 (0) 2747 / 925-0","mail":"info@hombach.de","branche_de":"Industrie-Heizsysteme","classification":"possible-lead","classification_reason":"Industrie-Heizung — Komponenten"},{"firma":"Harter GmbH","plz_ort":"88167 Stiefenhofen","web":"www.harter-gmbh.de/","tel":"+49 8386 9333 0","mail":"info@harter-gmbh.de","branche_de":"Trockner & Wärmepumpen","classification":"possible-lead","classification_reason":"Trockentechnik — Lohnfertigung"},{"firma":"Meier Prozesstechnik GmbH","plz_ort":"46397 Bocholt","web":"www.meier-prozesstechnik.de/","tel":"+49 2871 2347 0","mail":"info@meier-prozesstechnik.de","branche_de":"Vakuum-Imprägnierungssysteme","classification":"possible-lead","classification_reason":"Vakuumtechnik — Apparatebau"},{"firma":"LIMODOR GmbH & Co KG Deutschland","plz_ort":"89231 Neu-Ulm","web":"www.limodor.de/","tel":"+49 731 9848 0","mail":"info@limodor.de","branche_de":"Wohnungs-Lüftungssysteme","classification":"direct","classification_reason":"DIREKT: Lüftung-Konkurrenz"},{"firma":"Mietzsch GmbH - Lufttechnik Dresden","plz_ort":"01129 Dresden","web":"www.mietzsch.de","tel":"+49 351 84358 0","mail":"mietzsch@mietzsch.de","branche_de":"Kunststoff-Ventilatoren","classification":"direct","classification_reason":"DIREKT: Ventilatoren"},{"firma":"Pfannenberg GmbH","plz_ort":"21035 Hamburg","web":"://www.pfannenberg.com","tel":"+49 40 73412 0","mail":"info@pfannenberg.com","branche_de":"Schaltschrank-Klimatisierung","classification":"possible-lead","classification_reason":"Schaltschrank-Klima — Bleche/Lohnfert"},{"firma":"Büchele Lufttechnik GmbH & Co. KG","plz_ort":"73760 Ostfildern","web":"www.buechele-lufttechnik.de/","tel":"+49 711 341697 0","mail":"info@buechele-lufttechnik.de","branche_de":"Lüftungs-Komponenten","classification":"direct","classification_reason":"DIREKT: Komponenten = unsere Produkte"},{"firma":"deconta GmbH","plz_ort":"46446 Emmerich am Rhein","web":"://www.deconta.com","tel":"+49 2822 9231 0","mail":"info@deconta.com","branche_de":"Schadstoff-Sanierungsgeräte","classification":"possible-lead","classification_reason":"Schadstoff-Geräte — Apparatebau"},{"firma":"Nederman Filtration GmbH","plz_ort":"73257 Köngen","web":"www.nederman.com/de-DE","tel":"+49 7024 86899 0","mail":"info@nederman.de","branche_de":"Luftfilter-Systeme","classification":"direct","classification_reason":"DIREKT: Filter+Ventilator"},{"firma":"Ventomaxx GmbH","plz_ort":"81379 München","web":"www.ventomaxx.de/","tel":"+49 89 2153860 0","mail":"info@ventomaxx.de","branche_de":"Dezentrale Lüftung","classification":"direct","classification_reason":"DIREKT: Lüftung-Konkurrenz"},{"firma":"SAPI Sandstrahl und Anlagenbau GmbH","plz_ort":"86753 Möttingen","web":"www.sapigmbh.com","tel":"+49 (0) 9083 / 9615 0","mail":"info@sapigmbh.de","branche_de":"Sandstrahlen + Lackierung","classification":"possible-lead","classification_reason":"Sandstrahl/Lack — Lohnfertigung"},{"firma":"Schuster Klima Lüftung GmbH & Co. KG","plz_ort":"86316 Friedberg","web":"www.klima-schuster.de","tel":"0049 821/ 24675 – 0","mail":"info@klima-schuster.de","branche_de":"Lüftung/Klima-Installation","classification":"neutral","classification_reason":"Installateur"},{"firma":"Zenner Ventilatoren Werke GmbH","plz_ort":"44289 Dortmund","web":"www.zenner-ventilatoren.de/","tel":"0049 231 927230 0 ","mail":"info@zenner-ventilatoren.de","branche_de":"Industrieventilatoren-Hersteller","classification":"direct","classification_reason":"DIREKT: stellt Ventilatoren her"},{"firma":"Envirotec GmbH","plz_ort":"07548 Gera","web":"www.envirotec.de/","tel":"+49 365 73322 0","mail":"info@envirotec.de","branche_de":"Abluft-/Abwasserreinigung","classification":"possible-lead","classification_reason":"Umwelttechnik — Apparatebau"},{"firma":"Swegon SLT GmbH","plz_ort":"51069 Köln","web":"://www.swegon.com","tel":"+49 221 1612 0","mail":"info.de@swegon.com","branche_de":"Diffusoren & Lüftungstechnik","classification":"direct","classification_reason":"DIREKT: Lüftungstechnik"},{"firma":"Airtec Thermoprocess GmbH","plz_ort":"22926 Ahrensburg","web":"www.airtec.de/","tel":"+49 4102 8965 0","mail":"info@airtec.de","branche_de":"Industrietrockenöfen","classification":"possible-lead","classification_reason":"Industrieöfen — Apparatebau"},{"firma":"FAIST Systeme GmbH","plz_ort":"86381 Krumbach","web":"www.faist.de/","tel":"+49 8331 9450","mail":"info@faist.de","branche_de":"Schallisolation-Hersteller","classification":"direct","classification_reason":"DIREKT: Schallschutz-Konkurrenz"},{"firma":"LTC - Lufttechnik Crimmitschau GmbH","plz_ort":"08451 Crimmitschau","web":"www.ltc-crimmitschau.com","tel":"0049 37 62 / 95 52 - 0","mail":"info@ltc-crimmitschau.com","branche_de":"Industrieventilatoren-Hersteller","classification":"direct","classification_reason":"DIREKT: stellt Ventilatoren her"},{"firma":"NOISE-EX INTERNATIONAL GmbH","plz_ort":"44628 Herne","web":"www.noise-ex.de","tel":"+49 2103 9637 0","mail":"info@noise-ex.de","branche_de":"Schallisolation-Hersteller","classification":"direct","classification_reason":"DIREKT: Schallschutz-Konkurrenz"},{"firma":"R. Scheuchl GmbH","plz_ort":"94496 Ortenburg","web":"www.scheuchl.de/","tel":"+49 8542 165 0","mail":"info@scheuchl.de","branche_de":"Gießerei-Maschinen","classification":"possible-lead","classification_reason":"Gießerei-Maschinen — Lohnfertigung"},{"firma":"Venta Luft- und Wärmetechnik GmbH","plz_ort":"74544 Michelbach an der Bilz","web":"www.venta-luw.de","tel":"0049 791/93034-0","mail":"info@venta-luw.de","branche_de":"Lüftung & Heizungstechnik","classification":"direct","classification_reason":"DIREKT: Lüftung+Heizung"},{"firma":"CasaFan GmbH","plz_ort":"63505 Langenselbold","web":"www.casafan.de/","tel":"+49 6184 9214 0","mail":"info@casafan.de","branche_de":"Deckenventilatoren","classification":"direct","classification_reason":"DIREKT: Ventilatoren"},{"firma":"TBH GmbH","plz_ort":"75334 Straubenhardt","web":"www.tbh.eu/","tel":"+49 7082 9473 0","mail":"info@tbh.eu","branche_de":"Absaug- & Filtersysteme","classification":"direct","classification_reason":"DIREKT: Filter+Absaug"},{"firma":"Helios GmbH","plz_ort":"78056 Villingen-Schwenningen","web":"www.heliosventilatoren.de/","tel":"+49 7721 9430 0","mail":"info@heliosventilatoren.de","branche_de":"Ventilatoren+Lüftungssysteme","classification":"direct","classification_reason":"DIREKT: Ventilatoren"},{"firma":"DRYTEC GmbH & Co KG","plz_ort":"22941 Norderstedt","web":"www.drytec.net/","tel":"+49 40 527209 0","mail":"info@drytec.net","branche_de":"Trocknung+Befeuchtung","classification":"possible-lead","classification_reason":"Trockentechnik — Komponenten"},{"firma":"HygroMatik GmbH","plz_ort":"24558 Henstedt-Ulzburg","web":"://www.hygromatik.com","tel":"+49 4193 895 0","mail":"hy@hygromatik.de","branche_de":"Industrie-Luftbefeuchter","classification":"possible-lead","classification_reason":"Befeuchter — Apparatebau"},{"firma":"Schulz Lufttechnik GmbH","plz_ort":"41540 Dormagen","web":"www.schulz-lufttechnik.de/","tel":"+49 2133 2465 0","mail":"info@schulz-lufttechnik.de","branche_de":"Lüftungs-Projektierung","classification":"neutral","classification_reason":"Reines Engineering"},{"firma":"WSP GmbH","plz_ort":"52074 Aachen","web":"www.wsp-aachen.de","tel":"+49 (0) 241 879703-0","mail":"info@wsp-aachen.de","branche_de":"Maschinenteile-Hersteller","classification":"possible-lead","classification_reason":"Hersteller von Maschinenteilen — Lohnfertigung-Kanal"},{"firma":"RODA Licht- und Lufttechnik GmbH","plz_ort":"32427 Minden","web":"www.roda.de/","tel":"+49 3242 791 0","mail":"info@roda.de","branche_de":"Rauch-/Wärmeabzug","classification":"possible-lead","classification_reason":"RWA — Lohnfertigung möglich"},{"firma":"WMB Ventilatoren GmbH","plz_ort":"74423 Obersontheim","web":"www.wmb.eu","tel":"+49 (0) 7973-91191-0","mail":"info@wmb.eu","branche_de":"Industrieventilatoren-Hersteller","classification":"direct","classification_reason":"DIREKT: stellt Ventilatoren her"},{"firma":"H.I.T. Haus- und Industrietechnik GmbH","plz_ort":"85221 Dachau","web":"www.hit-vt.de","tel":"+49 8131 90 76-0","mail":"info@hit-vt.de","branche_de":"Heizung/Lüftung-Installation","classification":"neutral","classification_reason":"Installateur"},{"firma":"Sunline GmbH","plz_ort":"37351 Dingelstädt","web":"www.sunline-heizflaechen.de","tel":"+49 36075 560-0","mail":"info@sunline-heizflaechen.de","branche_de":"Deckenstrahlheizungen","classification":"possible-lead","classification_reason":"Strahlheizung — Lohnfertigung"},{"firma":"HANSA Ventilatorenbau GmbH & Co. KG","plz_ort":"48163 Münster","web":"www.hansa-klima.de/","tel":"+49 251 6183 0","mail":"info@hansa-klima.de","branche_de":"Klima- und Ventilatoren","classification":"direct","classification_reason":"DIREKT: Klima+Ventilatoren"},{"firma":"Wolter GmbH","plz_ort":"74252 Massenbachhausen","web":"www.wolter.eu/","tel":"+49 7467 9440 0","mail":"info@wolter.eu","branche_de":"Ventilatoren+Lüftungsausstattung","classification":"direct","classification_reason":"DIREKT: Ventilatoren"}];
+let OVERRIDES = {};
+const state = { search: '', cat: 'all', sortBy: 'classification', sortDir: 'asc' };
+function esc(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function normUrl(u) { if (!u) return '#'; if (/^https?:\/\//.test(u)) return u; return 'https://' + u; }
+function slugify(s) { return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,80); }
+function showToast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+function getEffectiveClass(k) {
+  const slug = slugify(k.firma);
+  if (OVERRIDES[slug] && OVERRIDES[slug].classification) return OVERRIDES[slug].classification;
+  return k.classification || 'unknown';
+}
+function isOverridden(k) {
+  const slug = slugify(k.firma);
+  return !!(OVERRIDES[slug] && OVERRIDES[slug].classification);
+}
+
+async function loadOverrides() {
+  try {
+    const res = await fetch('/api/konk-class?nc=' + Date.now(), { cache: 'no-store' });
+    const d = await res.json();
+    OVERRIDES = d.overrides || {};
+  } catch (e) { OVERRIDES = {}; }
+}
+
+async function setClass(slug, cls) {
+  try {
+    const res = await fetch('/api/konk-class/' + slug, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ classification: cls })
+    });
+    if (!res.ok) throw new Error('Save failed');
+    const d = await res.json();
+    if (cls === null) delete OVERRIDES[slug];
+    else OVERRIDES[slug] = { classification: cls, ts: d.ts };
+    showToast(cls === 'kunde' ? '✓ Als KUNDE markiert — auf /kunden sichtbar' : (cls ? '✓ Bewertung gespeichert' : '↺ Override entfernt'));
+    render();
+  } catch (e) { showToast('❌ Fehler: ' + e.message); }
+}
+
+window.onClassClick = function(slug, cls, currentCls) {
+  if (currentCls === cls) setClass(slug, null);
+  else setClass(slug, cls);
+};
+
+function counts() {
+  const c = { all: 0, direct: 0, 'possible-lead': 0, neutral: 0, kunde: 0 };
+  for (const k of KONK) {
+    const cls = getEffectiveClass(k);
+    if (c[cls] !== undefined) c[cls]++;
+    if (cls !== 'kunde') c.all++;
+  }
+  return c;
+}
+
+function render() {
+  const c = counts();
+  document.getElementById('s-all').textContent = c.all;
+  document.getElementById('s-direct').textContent = c.direct;
+  document.getElementById('s-possible').textContent = c['possible-lead'];
+  document.getElementById('s-neutral').textContent = c.neutral;
+  document.getElementById('s-kunde').textContent = c.kunde;
+
+  let list = KONK.slice();
+  if (state.cat === 'all') list = list.filter(k => getEffectiveClass(k) !== 'kunde');
+  else list = list.filter(k => getEffectiveClass(k) === state.cat);
+  if (state.search) {
+    const s = state.search.toLowerCase();
+    list = list.filter(k => (k.firma||'').toLowerCase().includes(s) || (k.plz_ort||'').toLowerCase().includes(s) || (k.branche_de||'').toLowerCase().includes(s) || (k.classification_reason||'').toLowerCase().includes(s));
+  }
+  const sortRank = { 'kunde': 0, 'direct': 1, 'possible-lead': 2, 'neutral': 3, 'unknown': 4 };
+  list.sort((a, b) => {
+    let av, bv;
+    if (state.sortBy === 'classification') { av = sortRank[getEffectiveClass(a)] || 9; bv = sortRank[getEffectiveClass(b)] || 9; }
+    else { av = String(a[state.sortBy] || '').toLowerCase(); bv = String(b[state.sortBy] || '').toLowerCase(); }
+    if (av < bv) return state.sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return state.sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  let html = '';
+  for (const k of list) {
+    const eff = getEffectiveClass(k);
+    const overridden = isOverridden(k);
+    const slug = slugify(k.firma);
+    const rowCls = 'row-' + eff;
+    const tel = k.tel ? '<a class="icon-btn" href="tel:' + esc(k.tel) + '">☎</a>' : '';
+    const mail = k.mail ? '<a class="icon-btn" href="mailto:' + esc(k.mail) + '">✉</a>' : '';
+    const web = k.web ? '<a href="' + normUrl(k.web) + '" target="_blank" style="color:var(--brand);font-size:12px">' + esc(k.web) + '</a>' : '–';
+    const btn = (cls, label) => '<button class="class-btn ' + (eff === cls ? 'active ' + cls : '') + '" onclick="onClassClick(\'' + slug + '\', \'' + cls + '\', \'' + eff + '\')">' + label + '</button>';
+    const toggles = btn('direct', 'DIREKT') + btn('possible-lead', 'MÖGLICH') + btn('neutral', 'NEUTRAL') + btn('kunde', '✓ KUNDE') + (overridden ? '<span class="override-mark">⭐</span>' : '');
+    html += '<tr class="' + rowCls + '"><td><div class="firma-name">' + esc(k.firma) + '</div><div class="firma-loc">' + esc(k.plz_ort) + '</div></td><td>' + esc(k.branche_de||'?') + '</td><td><div class="class-toggle">' + toggles + '</div></td><td><div class="reason">' + esc(k.classification_reason||'') + '</div></td><td>' + esc(k.plz_ort) + '</td><td>' + web + '</td><td>' + tel + mail + '</td></tr>';
+  }
+  document.getElementById('tbody').innerHTML = html || '<tr><td colspan="7" style="text-align:center;padding:40px;color:#94a3b8">Keine Treffer</td></tr>';
+}
+
+document.querySelectorAll('.stat').forEach(s => {
+  s.addEventListener('click', () => {
+    document.querySelectorAll('.stat').forEach(x => x.classList.remove('active'));
+    s.classList.add('active');
+    state.cat = s.dataset.cat;
+    render();
+  });
+});
+document.getElementById('search').addEventListener('input', e => { state.search = e.target.value.trim(); render(); });
+document.querySelectorAll('th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const k = th.dataset.sort;
+    if (state.sortBy === k) state.sortDir = state.sortDir === 'asc' ? 'desc' : 'asc';
+    else { state.sortBy = k; state.sortDir = 'asc'; }
+    render();
+  });
+});
+loadOverrides().then(() => render());
+</script>
+</body>
+</html>
