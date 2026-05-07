@@ -282,7 +282,7 @@ tbody tr.row-kunde { background: #f0fdf4; }
 </div>
 <div class="toast" id="toast"></div>
 <script>
-const KONK = []; // TODO: Eigene Konkurrenz-Liste eintragen – siehe CONFIG.md
+const KONK = [{"firma":"Beispiel GmbH","plz_ort":"00000 Musterstadt","web":"www.beispiel.de","tel":"","mail":"","branche_de":"Beispiel","classification":"neutral","classification_reason":"Platzhalter – bitte ersetzen"}];
 let OVERRIDES = {};
 const state = { search: '', cat: 'all', sortBy: 'classification', sortDir: 'asc' };
 function esc(s) { if (s == null) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
