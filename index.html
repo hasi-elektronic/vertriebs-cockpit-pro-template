@@ -608,6 +608,7 @@ td.score-cell { padding: 8px 4px; }
     <button class="csv-btn" id="addFirmaBtn" onclick="openAddFirma()" style="background:#16a34a;color:#fff;border-color:#16a34a">+ Firma</button>
     <button class="csv-btn" id="importBtn" onclick="openImportModal()" style="background:#0369a1;color:#fff;border-color:#0369a1">&#x2B06; Excel Import</button>
     <button class="csv-btn" id="aiSearchBtn" onclick="openAiSearch()" style="background:#7c3aed;color:#fff;border-color:#7c3aed">&#x1F50D; KI-Suche</button>
+    <button class="csv-btn" id="produkteBtn" onclick="openProduktModal()" style="background:#0f172a;color:#fff;border-color:#0f172a">&#x2699;&#xFE0F; Produkte</button>
   </div>
   <div class="filter-section">
     <div class="filter-group"><div class="filter-label">Beste Produktlinie</div><div class="chip-row" id="produkt-chips"></div></div>
@@ -633,18 +634,10 @@ td.score-cell { padding: 8px 4px; }
     <th data-sort="umsatz_mio" class="center">Umsatz</th>
     <th>Branchen</th>
     <th data-sort="best_produkt">Best</th>
-    <th data-sort="score_produkt_a" class="score-col" title="Produkt A">PA</th>
-    <th data-sort="score_produkt_b" class="score-col" title="Produkt B">PB</th>
-    <th data-sort="score_produkt_c" class="score-col" title="Produkt C">PC</th>
-    <th data-sort="score_produkt_d" class="score-col" title="Produkt D">PD</th>
-    <th data-sort="score_metalldrueckteile" class="score-col" title="Metalldrückteile">DRU</th>
-    <th data-sort="score_industrielackierung" class="score-col" title="Industrielackierung">LAK</th>
-    <th data-sort="score_lohnfertigung_blech" class="score-col" title="Lohnfertigung Blech (Laser+Biegen+Entgraten)">LFB</th>
-    <th data-sort="score_nuten_fraesen_drehen" class="score-col" title="Nuten / Fräsen / Drehen">NFD</th>
-    <th data-sort="score_werkzeugschraenke" class="score-col" title="Werkzeugschränke">WSC</th>
+    <!-- score-headers dynamisch per JS -->
     <th>Kontakt</th>
     <th class="sticky-right">Aktionen</th>
-  </tr></thead><tbody id="tbody"><tr><td colspan="23" style="padding:60px;text-align:center;color:#94a3b8;font-size:14px">⏳ Lade Daten…</td></tr></tbody></table></div>
+  </tr></thead><tbody id="tbody"><tr><td id="loading-td" style="padding:60px;text-align:center;color:#94a3b8;font-size:14px">⏳ Lade Daten…</td></tr></tbody></table></div>
 </div>
 <div class="footer">
   <p><strong>Vertriebs-Cockpit Pro</strong></p>
@@ -656,10 +649,10 @@ td.score-cell { padding: 8px 4px; }
 <script>
 
 const DATA = {"leads":[],"produkte":["produkt_a","produkt_b","produkt_c"],"produkt_labels":{"produkt_a":"Produkt A","produkt_b":"Produkt B","produkt_c":"Produkt C"},"produkt_short":{"produkt_a":"PA","produkt_b":"PB","produkt_c":"PC"},"produkt_tooltip":{"produkt_a":"Produkt A","produkt_b":"Produkt B","produkt_c":"Produkt C"},"bundesland_full":{"BW":"Baden-Württemberg","BY":"Bayern","NW":"Nordrhein-Westfalen","HE":"Hessen","NI":"Niedersachsen","HH":"Hamburg","BE":"Berlin","SN":"Sachsen","TH":"Thüringen","BB":"Brandenburg","MV":"Mecklenburg-Vorpommern","ST":"Sachsen-Anhalt","SH":"Schleswig-Holstein","RP":"Rheinland-Pfalz","SL":"Saarland","HB":"Bremen","?":"Unbekannt"},"stats":{"total":0,"a_count":0,"b_count":0,"c_count":0,"d_count":0,"verified_count":0}};
-const PRODUKT_LABEL = DATA.produkt_labels;
-const PRODUKT_SHORT = DATA.produkt_short;
-const PRODUKT_TOOLTIP = DATA.produkt_tooltip;
-const PRODUKTE = DATA.produkte;
+let PRODUKT_LABEL = Object.assign({}, DATA.produkt_labels);
+let PRODUKT_SHORT = Object.assign({}, DATA.produkt_short);
+let PRODUKT_TOOLTIP = Object.assign({}, DATA.produkt_tooltip);
+let PRODUKTE = DATA.produkte.slice();
 const BL_FULL = DATA.bundesland_full;
 const LEADS = DATA.leads;
 
@@ -868,13 +861,13 @@ document.querySelectorAll('.kpi').forEach(el => {
 // === Quick-Sort PRESETS · 9 Produkte (Abteilungs-Modell) ===
 const PRESETS = [
   { id: 'top-lfb', label: '⚡ Lohnfertigung Blech', desc: 'Laser+Biegen+Entgraten · TruLaser-Akquise', sort: [{ key: 'score_lohnfertigung_blech', dir: 'desc' }], filter: { produkt: 'lohnfertigung_blech' } },
-  { id: 'top-pd', label: '📦 Produkt D', desc: 'Zielgruppe D', sort: [{ key: 'score_produkt_d', dir: 'desc' }], filter: { produkt: 'produkt_d' } },
-  { id: 'top-pa', label: '📦 Produkt A', desc: 'Zielgruppe A', sort: [{ key: 'score_produkt_a', dir: 'desc' }], filter: { produkt: 'produkt_a' } },
-  { id: 'top-pc', label: '📦 Produkt C', desc: 'Zielgruppe C', sort: [{ key: 'score_produkt_c', dir: 'desc' }], filter: { produkt: 'produkt_c' } },
+  
+  // Produkt-Presets werden dynamisch per buildProduktPresets() gesetzt
+  
   { id: 'top-lak', label: '🎨 Industrielackierung', desc: 'Großteile-Pulverlack · Stahlbau', sort: [{ key: 'score_industrielackierung', dir: 'desc' }], filter: { produkt: 'industrielackierung' } },
   { id: 'top-nfd', label: '⚙ Nuten/Fräsen/Drehen', desc: 'CNC mech. Bearbeitung · Antriebe', sort: [{ key: 'score_nuten_fraesen_drehen', dir: 'desc' }], filter: { produkt: 'nuten_fraesen_drehen' } },
   { id: 'top-drueck', label: '🔧 Metalldrückteile', desc: 'Niche · Apparatebau · Beleuchtung', sort: [{ key: 'score_metalldrueckteile', dir: 'desc' }], filter: { produkt: 'metalldrueckteile' } },
-  { id: 'top-pb', label: '📦 Produkt B', desc: 'Zielgruppe B', sort: [{ key: 'score_produkt_b', dir: 'desc' }], filter: { produkt: 'produkt_b' } },
+  
   { id: 'top-wsc', label: '🗄 Werkzeugschränke', desc: 'KFZ · Werkstätten · Industrie', sort: [{ key: 'score_werkzeugschraenke', dir: 'desc' }], filter: { produkt: 'werkzeugschraenke' } },
   { id: 'a-bw', label: '🎯 A-Tier BW', desc: 'Höchste Prio · Heimatmarkt', sort: [{ key: 'best_score', dir: 'desc' }], filter: { tier: 'A', region: 'BW' } },
   { id: 'a-by', label: '🎯 A-Tier BY', desc: 'Höchste Prio · Bayern', sort: [{ key: 'best_score', dir: 'desc' }], filter: { tier: 'A', region: 'BY' } },
@@ -2625,7 +2618,7 @@ async function loadCustomLeads() {
 }
 
 // Load custom leads on init and re-render
-loadCustomLeads().finally(() => { try { render(); } catch(e) {} });
+loadProdukte().then(() => loadCustomLeads()).finally(() => { try { render(); } catch(e) {} });
 
 // ===== ADD FIRMA MODAL =====
 function openAddFirma() {
@@ -3083,6 +3076,227 @@ async function aisAddSelected() {
   render();
   closeAiSearch();
   showToast('✅ ' + added + ' Firma' + (added !== 1 ? 'en' : '') + ' hinzugefügt');
+}
+</script>
+
+
+<!-- ===== PRODUKT-VERWALTUNG ===== -->
+<div id="produktOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.7);z-index:500;align-items:center;justify-content:center;padding:16px" onclick="if(event.target.id==='produktOverlay')closeProduktModal()">
+  <div style="background:#fff;border-radius:14px;width:100%;max-width:700px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 70px rgba(0,0,0,.35)" onclick="event.stopPropagation()">
+    <div style="background:#0f172a;color:#fff;padding:20px 26px;border-radius:14px 14px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <h2 style="margin:0;font-size:18px">⚙️ Produkte verwalten</h2>
+        <div style="font-size:12px;opacity:.75;margin-top:3px">Produktlinien definieren · Bewertungssystem anpassen</div>
+      </div>
+      <button onclick="closeProduktModal()" style="background:rgba(255,255,255,.15);border:0;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px">&times;</button>
+    </div>
+    <div style="padding:24px">
+
+      <!-- Product list -->
+      <div id="pm-list" style="margin-bottom:20px"></div>
+
+      <!-- Add new product form -->
+      <div style="border:1.5px dashed #cbd5e1;border-radius:10px;padding:16px;background:#f8fafc">
+        <div style="font-size:13px;font-weight:700;color:#334155;margin-bottom:12px">➕ Neues Produkt</div>
+        <div style="display:grid;grid-template-columns:2fr 1fr 2fr;gap:10px;margin-bottom:10px">
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Produktname *</label>
+            <input id="pm-new-label" type="text" placeholder="z.B. Schweißbaugruppen" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Kürzel *</label>
+            <input id="pm-new-short" type="text" placeholder="SWG" maxlength="6" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box;text-transform:uppercase">
+          </div>
+          <div>
+            <label style="font-size:11px;font-weight:600;color:#64748b;display:block;margin-bottom:4px">Beschreibung</label>
+            <input id="pm-new-tooltip" type="text" placeholder="Kurze Beschreibung" style="width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:7px;font-size:13px;box-sizing:border-box">
+          </div>
+        </div>
+        <button onclick="pmAddProduct()" style="padding:9px 20px;border:0;border-radius:7px;background:#0f172a;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Hinzufügen</button>
+      </div>
+
+      <div id="pm-msg" style="display:none;margin-top:12px;padding:10px 14px;border-radius:8px;font-size:13px"></div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeProduktModal()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">Abbrechen</button>
+        <button onclick="pmSave()" id="pm-save-btn" style="padding:10px 24px;border:0;border-radius:8px;background:#0f172a;color:#fff;font-size:14px;font-weight:600;cursor:pointer">💾 Speichern & Anwenden</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== PRODUKT-VERWALTUNG =====
+let pmDraft = []; // working copy while modal is open
+
+async function loadProdukte() {
+  try {
+    const res = await fetch('/api/config/produkte');
+    const d = await res.json();
+    if (d.produkte && d.produkte.length > 0) {
+      applyProdukte(d.produkte);
+    }
+    // If empty, keep DATA defaults
+  } catch(e) { console.warn('loadProdukte failed:', e); }
+}
+
+function applyProdukte(list) {
+  // Rebuild global PRODUKTE arrays
+  PRODUKTE.length = 0;
+  for (const p of list) PRODUKTE.push(p.id);
+  for (const p of list) {
+    PRODUKT_LABEL[p.id] = p.label;
+    PRODUKT_SHORT[p.id] = p.short;
+    PRODUKT_TOOLTIP[p.id] = p.tooltip || p.label;
+  }
+  buildScoreHeaders();
+  buildProduktChips();
+}
+
+function buildScoreHeaders() {
+  // Replace placeholder comment with dynamic <th> elements
+  const thead = document.querySelector('thead tr');
+  if (!thead) return;
+  // Remove existing score-col headers
+  thead.querySelectorAll('th.score-col').forEach(th => th.remove());
+  // Find insertion point: before Kontakt column
+  const kontaktTh = Array.from(thead.querySelectorAll('th')).find(th => th.textContent.trim() === 'Kontakt');
+  if (!kontaktTh) return;
+  for (const p of PRODUKTE) {
+    const th = document.createElement('th');
+    th.className = 'score-col';
+    th.dataset.sort = 'score_' + p;
+    th.title = PRODUKT_TOOLTIP[p] || PRODUKT_LABEL[p] || p;
+    th.textContent = PRODUKT_SHORT[p] || p.slice(0,4).toUpperCase();
+    th.style.cursor = 'pointer';
+    // Click to sort (reuse existing sort logic)
+    th.addEventListener('click', (e) => {
+      const sortFn = window.handleSortClick || null;
+      if (sortFn) sortFn(e, th);
+      else th.dispatchEvent(new MouseEvent('click', {bubbles: false}));
+    });
+    thead.insertBefore(th, kontaktTh);
+  }
+  // Update loading colspan
+  const loadingTd = document.getElementById('loading-td');
+  if (loadingTd) loadingTd.colSpan = thead.querySelectorAll('th').length;
+}
+
+function buildProduktChips() {
+  // Rebuild the produkt filter chips
+  const chipRow = document.getElementById('produkt-chips');
+  if (!chipRow) return;
+  chipRow.innerHTML = PRODUKTE.map(p =>
+    `<span class="chip" data-key="produkt" data-val="${p}" onclick="setChip('produkt','${p}',this)">${PRODUKT_LABEL[p] || p}</span>`
+  ).join('');
+}
+
+// Call buildScoreHeaders on page load (DATA defaults)
+document.addEventListener('DOMContentLoaded', () => {
+  buildScoreHeaders();
+  buildProduktChips();
+});
+// Also call immediately in case DOM already ready
+if (document.readyState !== 'loading') {
+  buildScoreHeaders();
+  buildProduktChips();
+}
+
+// ===== MODAL =====
+function openProduktModal() {
+  // Clone current PRODUKTE to draft
+  pmDraft = PRODUKTE.map(id => ({
+    id, label: PRODUKT_LABEL[id] || id,
+    short: PRODUKT_SHORT[id] || id.slice(0,4).toUpperCase(),
+    tooltip: PRODUKT_TOOLTIP[id] || '',
+  }));
+  document.getElementById('produktOverlay').style.display = 'flex';
+  pmRenderList();
+  document.getElementById('pm-msg').style.display = 'none';
+  // Clear add form
+  ['pm-new-label','pm-new-short','pm-new-tooltip'].forEach(id => document.getElementById(id).value = '');
+}
+function closeProduktModal() {
+  document.getElementById('produktOverlay').style.display = 'none';
+}
+
+function pmRenderList() {
+  const el = document.getElementById('pm-list');
+  if (!pmDraft.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">Noch keine Produkte definiert. Füge unten dein erstes Produkt hinzu.</div>';
+    return;
+  }
+  el.innerHTML = pmDraft.map((p, i) => `
+    <div style="display:grid;grid-template-columns:2fr 1fr 2fr auto auto;gap:8px;align-items:center;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:9px;margin-bottom:8px;background:#fff" id="pm-row-${i}">
+      <input type="text" value="${esc(p.label)}" oninput="pmDraft[${i}].label=this.value" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;width:100%;box-sizing:border-box" placeholder="Produktname">
+      <input type="text" value="${esc(p.short)}" oninput="pmDraft[${i}].short=this.value.toUpperCase();this.value=this.value.toUpperCase()" maxlength="6" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;width:100%;box-sizing:border-box;text-align:center;font-weight:700;letter-spacing:1px" placeholder="SWG">
+      <input type="text" value="${esc(p.tooltip)}" oninput="pmDraft[${i}].tooltip=this.value" style="padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;width:100%;box-sizing:border-box" placeholder="Beschreibung">
+      <button onclick="pmMoveUp(${i})" ${i===0?'disabled':''} title="Nach oben" style="width:30px;height:30px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;cursor:pointer;font-size:14px;color:#475569">↑</button>
+      <button onclick="pmDelete(${i})" title="Löschen" style="width:30px;height:30px;border:1px solid #fca5a5;border-radius:6px;background:#fef2f2;cursor:pointer;font-size:14px;color:#dc2626">✕</button>
+    </div>`).join('');
+}
+
+function pmAddProduct() {
+  const label = document.getElementById('pm-new-label').value.trim();
+  const shortVal = document.getElementById('pm-new-short').value.trim().toUpperCase();
+  const tooltip = document.getElementById('pm-new-tooltip').value.trim();
+  if (!label || !shortVal) { pmShowMsg('Produktname und Kürzel sind Pflicht.', false); return; }
+  // Generate ID from label
+  const id = label.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40) || ('prod_' + Date.now());
+  if (pmDraft.find(p => p.id === id)) { pmShowMsg('Produkt mit diesem Namen existiert bereits.', false); return; }
+  pmDraft.push({ id, label, short: shortVal, tooltip });
+  pmRenderList();
+  document.getElementById('pm-new-label').value = '';
+  document.getElementById('pm-new-short').value = '';
+  document.getElementById('pm-new-tooltip').value = '';
+  document.getElementById('pm-new-label').focus();
+}
+
+function pmDelete(i) {
+  if (!confirm('Produkt "' + pmDraft[i].label + '" entfernen?\nBestehende Scores für dieses Produkt bleiben erhalten, werden aber nicht mehr angezeigt.')) return;
+  pmDraft.splice(i, 1);
+  pmRenderList();
+}
+
+function pmMoveUp(i) {
+  if (i === 0) return;
+  [pmDraft[i-1], pmDraft[i]] = [pmDraft[i], pmDraft[i-1]];
+  pmRenderList();
+}
+
+function pmShowMsg(text, ok) {
+  const el = document.getElementById('pm-msg');
+  el.textContent = text;
+  el.style.background = ok ? '#f0fdf4' : '#fef2f2';
+  el.style.border = '1px solid ' + (ok ? '#86efac' : '#fca5a5');
+  el.style.color = ok ? '#16a34a' : '#dc2626';
+  el.style.display = 'block';
+}
+
+async function pmSave() {
+  if (!pmDraft.length) { pmShowMsg('Mindestens ein Produkt erforderlich.', false); return; }
+  const btn = document.getElementById('pm-save-btn');
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+  try {
+    const res = await fetch('/api/config/produkte', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ produkte: pmDraft }),
+    });
+    const d = await res.json();
+    if (d.ok) {
+      applyProdukte(d.produkte);
+      render();
+      pmShowMsg('✅ Produkte gespeichert und angewendet!', true);
+      setTimeout(() => closeProduktModal(), 1200);
+      showToast('✅ ' + d.produkte.length + ' Produkte aktualisiert');
+    } else {
+      pmShowMsg(d.error || 'Fehler beim Speichern', false);
+    }
+  } catch(e) {
+    pmShowMsg('Netzwerkfehler: ' + e.message, false);
+  }
+  btn.disabled = false; btn.textContent = '💾 Speichern & Anwenden';
 }
 </script>
 

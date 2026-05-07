@@ -725,6 +725,44 @@ export async function onRequest(context) {
     return jsonResponse({ ok: true, tags: unique });
   }
 
+  // === API: Produkt-Konfiguration ===
+
+  // GET /api/config/produkte
+  if (url.pathname === '/api/config/produkte' && request.method === 'GET') {
+    if (!env.KV) return jsonResponse({ produkte: [] });
+    const val = await env.KV.get('config:produkte');
+    if (!val) return jsonResponse({ produkte: [] });
+    try { return jsonResponse({ produkte: JSON.parse(val) }); }
+    catch(e) { return jsonResponse({ produkte: [] }); }
+  }
+
+  // POST /api/config/produkte — komplette Liste ersetzen (admin only)
+  if (url.pathname === '/api/config/produkte' && request.method === 'POST') {
+    if (user.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
+    if (!env.KV) return jsonResponse({ error: 'KV not bound' }, 500);
+    const body = await request.json().catch(() => ({}));
+    const list = Array.isArray(body.produkte) ? body.produkte : [];
+    // Validate each product
+    const validated = [];
+    const seenIds = new Set();
+    for (const p of list.slice(0, 30)) {
+      const id = clamp(p.id || '', 50).trim().replace(/[^a-z0-9_]/g, '_');
+      if (!id || seenIds.has(id)) continue;
+      seenIds.add(id);
+      validated.push({
+        id,
+        label: clamp(p.label || id, 100).trim(),
+        short: clamp(p.short || id.slice(0,4).toUpperCase(), 8).trim().toUpperCase(),
+        tooltip: clamp(p.tooltip || '', 200).trim(),
+      });
+    }
+    await env.KV.put('config:produkte', JSON.stringify(validated));
+    await env.KV.put(`audit:config:produkte:${new Date().toISOString()}`, JSON.stringify({
+      action: 'produkte_updated', count: validated.length, user: user.id, name: user.name,
+    }), { expirationTtl: 60 * 60 * 24 * 365 });
+    return jsonResponse({ ok: true, produkte: validated });
+  }
+
   // === API: Custom Leads (manuell hinzugefügte Firmen) ===
 
   // GET /api/custom-leads — alle custom leads laden
