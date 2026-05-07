@@ -605,6 +605,8 @@ td.score-cell { padding: 8px 4px; }
     <input type="text" class="search-input" id="search" placeholder="Suche: Firma, Stadt, PLZ, Branche, Kontakt ..." autocomplete="off">
     <button class="reset-btn" id="resetBtn">Reset</button>
     <button class="csv-btn" id="csvBtn">CSV Export</button>
+    <button class="csv-btn" id="addFirmaBtn" onclick="openAddFirma()" style="background:#16a34a;color:#fff;border-color:#16a34a">+ Firma</button>
+    <button class="csv-btn" id="importBtn" onclick="openImportModal()" style="background:#0369a1;color:#fff;border-color:#0369a1">&#x2B06; Excel Import</button>
   </div>
   <div class="filter-section">
     <div class="filter-group"><div class="filter-label">Beste Produktlinie</div><div class="chip-row" id="produkt-chips"></div></div>
@@ -2480,5 +2482,385 @@ window.openDetail = function(id) {
     <div id="qsResults" style="overflow-y:auto;flex:1;padding:6px 0"></div>
   </div>
 </div>
+
+
+<!-- ===== CUSTOM LEADS: Firma hinzufügen + Excel Import ===== -->
+
+<!-- Modals HTML -->
+<div id="addFirmaOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:400;align-items:center;justify-content:center;padding:16px" onclick="if(event.target.id==='addFirmaOverlay')closeAddFirma()">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:640px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+    <div style="background:#16a34a;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <h2 style="margin:0;font-size:18px">Firma manuell hinzufügen</h2>
+      <button onclick="closeAddFirma()" style="background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px">&times;</button>
+    </div>
+    <div style="padding:24px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1">
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Firmenname *</label>
+          <input id="af-firma" type="text" placeholder="Mustermann GmbH" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">PLZ Ort</label>
+          <input id="af-plz_ort" type="text" placeholder="70173 Stuttgart" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Bundesland</label>
+          <select id="af-bundesland" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;background:#fff;box-sizing:border-box">
+            <option value="?">– wählen –</option>
+            <option value="BW">Baden-Württemberg</option><option value="BY">Bayern</option>
+            <option value="BE">Berlin</option><option value="BB">Brandenburg</option>
+            <option value="HB">Bremen</option><option value="HH">Hamburg</option>
+            <option value="HE">Hessen</option><option value="MV">Mecklenburg-Vorpommern</option>
+            <option value="NI">Niedersachsen</option><option value="NW">Nordrhein-Westfalen</option>
+            <option value="RP">Rheinland-Pfalz</option><option value="SL">Saarland</option>
+            <option value="SN">Sachsen</option><option value="ST">Sachsen-Anhalt</option>
+            <option value="SH">Schleswig-Holstein</option><option value="TH">Thüringen</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Telefon</label>
+          <input id="af-tel" type="text" placeholder="+49 711 123456" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">E-Mail</label>
+          <input id="af-mail" type="text" placeholder="info@firma.de" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Website</label>
+          <input id="af-web" type="text" placeholder="www.firma.de" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Kontaktperson</label>
+          <input id="af-kontakt_person" type="text" placeholder="Max Mustermann" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Branche</label>
+          <input id="af-branche" type="text" placeholder="Maschinenbau" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Priorität (Score 0–100)</label>
+          <input id="af-score" type="number" min="0" max="100" value="60" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">Umsatz (Mio €)</label>
+          <input id="af-umsatz" type="number" min="0" step="0.1" placeholder="10" style="width:100%;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;box-sizing:border-box">
+        </div>
+      </div>
+      <div id="af-error" style="display:none;margin-top:12px;padding:10px 14px;background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;color:#dc2626;font-size:13px"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button onclick="closeAddFirma()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">Abbrechen</button>
+        <button onclick="submitAddFirma()" id="af-submit" style="padding:10px 24px;border:0;border-radius:8px;background:#16a34a;color:#fff;cursor:pointer;font-size:14px;font-weight:600">Firma hinzufügen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="importOverlay" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.65);z-index:400;align-items:center;justify-content:center;padding:16px" onclick="if(event.target.id==='importOverlay')closeImportModal()">
+  <div style="background:#fff;border-radius:12px;width:100%;max-width:800px;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)" onclick="event.stopPropagation()">
+    <div style="background:#0369a1;color:#fff;padding:18px 24px;border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:space-between">
+      <h2 style="margin:0;font-size:18px">Excel / CSV Import</h2>
+      <button onclick="closeImportModal()" style="background:rgba(255,255,255,.2);border:0;color:#fff;width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:18px">&times;</button>
+    </div>
+    <div style="padding:24px">
+      <!-- Step 1: Upload -->
+      <div id="imp-step1">
+        <div id="imp-dropzone" style="border:2px dashed #cbd5e1;border-radius:10px;padding:40px;text-align:center;cursor:pointer;transition:.2s" onclick="document.getElementById('imp-fileInput').click()" ondragover="event.preventDefault();this.style.borderColor='#0369a1'" ondragleave="this.style.borderColor='#cbd5e1'" ondrop="handleImportDrop(event)">
+          <div style="font-size:36px;margin-bottom:10px">📂</div>
+          <div style="font-size:15px;font-weight:600;color:#334155">Excel (.xlsx, .xls) oder CSV hier ablegen</div>
+          <div style="font-size:13px;color:#94a3b8;margin-top:6px">oder klicken zum Auswählen</div>
+          <input type="file" id="imp-fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleImportFile(this.files[0])">
+        </div>
+        <div style="margin-top:16px;padding:12px 16px;background:#f0f9ff;border-radius:8px;font-size:13px;color:#0369a1">
+          <strong>Erwartete Spalten:</strong> firma, plz_ort, tel, mail, web, kontakt_person, branche, bundesland, umsatz_mio<br>
+          <span style="color:#64748b">Tipp: Erste Zeile = Spaltenüberschriften. Andere Spaltennamen werden im nächsten Schritt zugeordnet.</span>
+        </div>
+      </div>
+
+      <!-- Step 2: Column Mapping -->
+      <div id="imp-step2" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <h3 style="margin:0;font-size:15px;color:#334155">Spalten zuordnen</h3>
+          <span id="imp-row-count" style="font-size:13px;color:#64748b"></span>
+        </div>
+        <div id="imp-mapping" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
+        <div style="margin-top:16px;padding:12px 16px;background:#f8fafc;border-radius:8px">
+          <h4 style="margin:0 0 10px;font-size:13px;font-weight:600;color:#475569">Vorschau (erste 3 Zeilen)</h4>
+          <div id="imp-preview" style="overflow-x:auto;font-size:12px"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+          <button onclick="impBackToStep1()" style="padding:10px 20px;border:1.5px solid #e2e8f0;border-radius:8px;background:#fff;cursor:pointer;font-size:14px">Zurück</button>
+          <button onclick="startImport()" id="imp-submit" style="padding:10px 24px;border:0;border-radius:8px;background:#0369a1;color:#fff;cursor:pointer;font-size:14px;font-weight:600">Import starten</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Result -->
+      <div id="imp-step3" style="display:none;text-align:center;padding:20px 0">
+        <div id="imp-result-icon" style="font-size:48px;margin-bottom:12px">✅</div>
+        <div id="imp-result-text" style="font-size:16px;font-weight:600;color:#16a34a"></div>
+        <button onclick="closeImportModal()" style="margin-top:20px;padding:10px 28px;border:0;border-radius:8px;background:#0369a1;color:#fff;cursor:pointer;font-size:14px;font-weight:600">Fertig</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== CUSTOM LEADS SYSTEM =====
+let CUSTOM_LEADS = [];
+
+async function loadCustomLeads() {
+  try {
+    const res = await fetch('/api/custom-leads');
+    const d = await res.json();
+    CUSTOM_LEADS = d.leads || [];
+    // Merge into LEADS array (avoid duplicates)
+    const existingIds = new Set(LEADS.map(l => l.id));
+    for (const cl of CUSTOM_LEADS) {
+      if (!existingIds.has(cl.id)) {
+        LEADS.push(cl);
+        existingIds.add(cl.id);
+      }
+    }
+  } catch(e) { console.warn('Custom leads load failed:', e); }
+}
+
+// Load custom leads on init and re-render
+loadCustomLeads().finally(() => { try { render(); } catch(e) {} });
+
+// ===== ADD FIRMA MODAL =====
+function openAddFirma() {
+  const ov = document.getElementById('addFirmaOverlay');
+  ov.style.display = 'flex';
+  document.getElementById('af-firma').focus();
+  document.getElementById('af-error').style.display = 'none';
+}
+function closeAddFirma() {
+  document.getElementById('addFirmaOverlay').style.display = 'none';
+}
+
+async function submitAddFirma() {
+  const firma = document.getElementById('af-firma').value.trim();
+  const errEl = document.getElementById('af-error');
+  if (!firma) { errEl.textContent = 'Firmenname ist Pflichtfeld.'; errEl.style.display='block'; return; }
+  errEl.style.display = 'none';
+  const btn = document.getElementById('af-submit');
+  btn.disabled = true; btn.textContent = 'Wird gespeichert...';
+  
+  const plz_ort = document.getElementById('af-plz_ort').value.trim();
+  const plz = plz_ort.match(/^(\d{4,5})/)?.[1] || '';
+  const score = Math.max(0, Math.min(100, parseInt(document.getElementById('af-score').value) || 60));
+  const scores = {};
+  for (const p of PRODUKTE) scores[p] = score;
+
+  const payload = {
+    firma, plz, plz_ort,
+    bundesland: document.getElementById('af-bundesland').value,
+    tel: document.getElementById('af-tel').value.trim(),
+    mail: document.getElementById('af-mail').value.trim(),
+    web: document.getElementById('af-web').value.trim(),
+    kontakt_person: document.getElementById('af-kontakt_person').value.trim(),
+    branchen: [document.getElementById('af-branche').value.trim()].filter(Boolean),
+    umsatz_mio: parseFloat(document.getElementById('af-umsatz').value) || 0,
+    scores,
+    _produkte: PRODUKTE,
+  };
+
+  try {
+    const res = await fetch('/api/custom-leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await res.json();
+    if (d.ok) {
+      LEADS.push(d.lead);
+      CUSTOM_LEADS.push(d.lead);
+      render();
+      closeAddFirma();
+      showToast('✅ ' + firma + ' hinzugefügt');
+      // Clear form
+      ['af-firma','af-plz_ort','af-tel','af-mail','af-web','af-kontakt_person','af-branche','af-umsatz'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('af-score').value = '60';
+      document.getElementById('af-bundesland').value = '?';
+    } else {
+      errEl.textContent = d.error || 'Fehler beim Speichern';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'Netzwerkfehler: ' + e.message;
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false; btn.textContent = 'Firma hinzufügen';
+}
+
+// ===== EXCEL IMPORT MODAL =====
+let impParsedData = []; // raw rows [{col:val,...}]
+let impHeaders = [];    // detected headers
+
+function openImportModal() {
+  document.getElementById('importOverlay').style.display = 'flex';
+  impShowStep(1);
+}
+function closeImportModal() {
+  document.getElementById('importOverlay').style.display = 'none';
+  impParsedData = []; impHeaders = [];
+  document.getElementById('imp-fileInput').value = '';
+}
+function impBackToStep1() { impShowStep(1); }
+function impShowStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('imp-step'+i).style.display = i===n ? 'block' : 'none';
+  });
+}
+
+function handleImportDrop(e) {
+  e.preventDefault();
+  document.getElementById('imp-dropzone').style.borderColor = '#cbd5e1';
+  const file = e.dataTransfer.files[0];
+  if (file) handleImportFile(file);
+}
+
+async function handleImportFile(file) {
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  
+  if (ext === 'csv') {
+    const text = await file.text();
+    parseCSV(text);
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    // Load SheetJS from CDN
+    if (!window.XLSX) {
+      await new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+        s.onload = res; s.onerror = rej;
+        document.head.appendChild(s);
+      });
+    }
+    const buf = await file.arrayBuffer();
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    if (!rows.length) { alert('Keine Daten gefunden.'); return; }
+    impHeaders = Object.keys(rows[0]);
+    impParsedData = rows;
+    showMappingStep();
+  } else {
+    alert('Bitte eine .xlsx, .xls oder .csv Datei verwenden.');
+  }
+}
+
+function parseCSV(text) {
+  const lines = text.trim().split(/?
+/);
+  if (lines.length < 2) { alert('CSV hat keine Daten.'); return; }
+  const sep = lines[0].includes(';') ? ';' : ',';
+  const headers = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g,''));
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].split(sep).map(v => v.trim().replace(/^["']|["']$/g,''));
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = vals[idx] || ''; });
+    rows.push(row);
+  }
+  impHeaders = headers;
+  impParsedData = rows;
+  showMappingStep();
+}
+
+const IMP_FIELDS = [
+  { key: 'firma', label: 'Firmenname *', required: true },
+  { key: 'plz_ort', label: 'PLZ Ort' },
+  { key: 'bundesland', label: 'Bundesland (BW, BY ...)' },
+  { key: 'tel', label: 'Telefon' },
+  { key: 'mail', label: 'E-Mail' },
+  { key: 'web', label: 'Website' },
+  { key: 'kontakt_person', label: 'Kontaktperson' },
+  { key: 'branche', label: 'Branche' },
+  { key: 'umsatz_mio', label: 'Umsatz (Mio €)' },
+  { key: 'score', label: 'Priorität / Score (0–100)' },
+];
+
+function showMappingStep() {
+  document.getElementById('imp-row-count').textContent = impParsedData.length + ' Zeilen gefunden';
+  const mappingEl = document.getElementById('imp-mapping');
+  mappingEl.innerHTML = IMP_FIELDS.map(f => {
+    // Auto-detect matching column
+    const match = impHeaders.find(h => h.toLowerCase().replace(/[_\s]/g,'') === f.key.toLowerCase().replace(/[_\s]/g,''))
+      || impHeaders.find(h => h.toLowerCase().includes(f.key.toLowerCase()))
+      || impHeaders.find(h => f.key.toLowerCase().includes(h.toLowerCase()));
+    const opts = ['<option value="">– nicht importieren –</option>',
+      ...impHeaders.map(h => `<option value="${esc(h)}" ${h===match?'selected':''}>${esc(h)}</option>`)].join('');
+    return `<div>
+      <label style="font-size:12px;font-weight:600;color:#475569;display:block;margin-bottom:4px">${esc(f.label)}</label>
+      <select id="imp-map-${f.key}" style="width:100%;padding:8px 10px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;background:#fff;box-sizing:border-box">${opts}</select>
+    </div>`;
+  }).join('');
+
+  // Preview table
+  const preview = impParsedData.slice(0, 3);
+  const previewHtml = '<table style="width:100%;border-collapse:collapse">'
+    + '<tr>' + impHeaders.map(h => `<th style="padding:4px 8px;background:#f1f5f9;text-align:left;font-size:11px;border:1px solid #e2e8f0">${esc(h)}</th>`).join('') + '</tr>'
+    + preview.map(row => '<tr>' + impHeaders.map(h => `<td style="padding:4px 8px;font-size:11px;border:1px solid #e2e8f0;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(String(row[h]||''))}</td>`).join('') + '</tr>').join('')
+    + '</table>';
+  document.getElementById('imp-preview').innerHTML = previewHtml;
+  impShowStep(2);
+}
+
+async function startImport() {
+  const mapping = {};
+  for (const f of IMP_FIELDS) {
+    const sel = document.getElementById('imp-map-'+f.key);
+    if (sel && sel.value) mapping[f.key] = sel.value;
+  }
+  if (!mapping.firma) { alert('Bitte "Firmenname" zuordnen.'); return; }
+
+  const btn = document.getElementById('imp-submit');
+  btn.disabled = true; btn.textContent = 'Wird importiert...';
+
+  const leads = impParsedData.map(row => {
+    const score = Math.max(0, Math.min(100, parseInt(row[mapping.score]) || 60));
+    const scores = {};
+    for (const p of PRODUKTE) scores[p] = score;
+    const branchen = mapping.branche && row[mapping.branche] ? [row[mapping.branche]] : [];
+    return {
+      firma: row[mapping.firma] || '',
+      plz_ort: mapping.plz_ort ? (row[mapping.plz_ort]||'') : '',
+      plz: (mapping.plz_ort ? (row[mapping.plz_ort]||'') : '').match(/^(\d{4,5})/)?.[1] || '',
+      tel: mapping.tel ? (row[mapping.tel]||'') : '',
+      mail: mapping.mail ? (row[mapping.mail]||'') : '',
+      web: mapping.web ? (row[mapping.web]||'') : '',
+      kontakt_person: mapping.kontakt_person ? (row[mapping.kontakt_person]||'') : '',
+      bundesland: mapping.bundesland ? (row[mapping.bundesland]||'?') : '?',
+      branchen, umsatz_mio: parseFloat(row[mapping.umsatz_mio]) || 0,
+      scores,
+    };
+  }).filter(l => l.firma.trim());
+
+  try {
+    const res = await fetch('/api/custom-leads/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ leads, _produkte: PRODUKTE, batch_name: new Date().toLocaleDateString('de-DE') })
+    });
+    const d = await res.json();
+    if (d.ok) {
+      document.getElementById('imp-result-icon').textContent = '✅';
+      document.getElementById('imp-result-text').textContent = d.added + ' Firmen erfolgreich importiert';
+      document.getElementById('imp-result-text').style.color = '#16a34a';
+      impShowStep(3);
+      // Reload custom leads and re-render
+      await loadCustomLeads();
+      render();
+    } else {
+      alert('Fehler: ' + (d.error || 'Unbekannt'));
+    }
+  } catch(e) {
+    alert('Netzwerkfehler: ' + e.message);
+  }
+  btn.disabled = false; btn.textContent = 'Import starten';
+}
+</script>
 </body>
 </html>

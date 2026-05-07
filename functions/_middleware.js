@@ -725,6 +725,128 @@ export async function onRequest(context) {
     return jsonResponse({ ok: true, tags: unique });
   }
 
+  // === API: Custom Leads (manuell hinzugefügte Firmen) ===
+
+  // GET /api/custom-leads — alle custom leads laden
+  if (url.pathname === '/api/custom-leads' && request.method === 'GET') {
+    if (!env.KV) return jsonResponse({ leads: [] });
+    const list = await env.KV.list({ prefix: 'custom_lead:', limit: 2000 });
+    const leads = [];
+    await Promise.all(list.keys.map(async k => {
+      const val = await env.KV.get(k.name);
+      if (val) { try { leads.push(JSON.parse(val)); } catch (e) {} }
+    }));
+    leads.sort((a, b) => (b._added_ts || '').localeCompare(a._added_ts || ''));
+    return jsonResponse({ leads });
+  }
+
+  // POST /api/custom-leads — eine Firma manuell hinzufügen
+  if (url.pathname === '/api/custom-leads' && request.method === 'POST') {
+    if (!env.KV) return jsonResponse({ error: 'KV not bound' }, 500);
+    const body = await request.json().catch(() => ({}));
+    const firma = clamp(body.firma || '', MAX_NAME).trim();
+    if (!firma) return jsonResponse({ error: 'Firma ist Pflichtfeld' }, 400);
+    const PRODUKTE_LIST = body._produkte || ['produkt_a'];
+    const scores = {};
+    for (const p of PRODUKTE_LIST) scores[p] = 50;
+    if (body.scores && typeof body.scores === 'object') {
+      for (const [k, v] of Object.entries(body.scores)) {
+        const n = parseInt(v); if (!isNaN(n)) scores[k] = Math.max(0, Math.min(100, n));
+      }
+    }
+    const best_score = Math.max(0, ...Object.values(scores));
+    const best_produkt = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0]?.[0] || PRODUKTE_LIST[0];
+    const tier = best_score >= 78 ? 'A' : best_score >= 62 ? 'B' : best_score >= 40 ? 'C' : 'D';
+    const id = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+    const plz = clamp(body.plz || '', 10);
+    const lead = {
+      id, firma,
+      plz, plz_ort: clamp(body.plz_ort || '', 100),
+      adresse: clamp(body.adresse || '', 200),
+      tel: clamp(body.tel || '', 50), mail: clamp(body.mail || '', 200),
+      web: clamp(body.web || '', 200),
+      kontakt_person: clamp(body.kontakt_person || '', MAX_NAME),
+      kontakt_mail: clamp(body.kontakt_mail || '', 200),
+      kontakt_tel: clamp(body.kontakt_tel || '', 50),
+      branchen: (Array.isArray(body.branchen) ? body.branchen : [body.branchen || '']).map(s => clamp(s,80)).filter(Boolean),
+      bundesland: clamp(body.bundesland || '?', 10),
+      size_label: clamp(body.size_label || '', 50),
+      umsatz_mio: parseFloat(body.umsatz_mio) || 0,
+      lat: parseFloat(body.lat) || null, lng: parseFloat(body.lng) || null,
+      scores, best_score, best_produkt, tier,
+      _custom: true, _added_by: user.id, _added_by_name: user.name,
+      _added_ts: new Date().toISOString(),
+    };
+    await env.KV.put(`custom_lead:${id}`, JSON.stringify(lead));
+    await env.KV.put(`audit:custom_lead:${lead._added_ts}:${id}`, JSON.stringify({
+      action: 'custom_lead_added', id, firma, user: user.id, name: user.name, ts: lead._added_ts,
+    }), { expirationTtl: 60 * 60 * 24 * 365 });
+    return jsonResponse({ ok: true, lead });
+  }
+
+  // POST /api/custom-leads/import — Bulk-Import (Excel/CSV, max 500 Zeilen)
+  if (url.pathname === '/api/custom-leads/import' && request.method === 'POST') {
+    if (!env.KV) return jsonResponse({ error: 'KV not bound' }, 500);
+    const body = await request.json().catch(() => ({}));
+    const rows = Array.isArray(body.leads) ? body.leads.slice(0, 500) : [];
+    if (!rows.length) return jsonResponse({ error: 'Keine Daten' }, 400);
+    const PRODUKTE_LIST = body._produkte || ['produkt_a'];
+    const ts = new Date().toISOString();
+    let added = 0;
+    for (const row of rows) {
+      const firma = clamp(row.firma || '', MAX_NAME).trim();
+      if (!firma) continue;
+      const scores = {};
+      for (const p of PRODUKTE_LIST) scores[p] = 50;
+      if (row.scores && typeof row.scores === 'object') {
+        for (const [k, v] of Object.entries(row.scores)) {
+          const n = parseInt(v); if (!isNaN(n)) scores[k] = Math.max(0, Math.min(100, n));
+        }
+      }
+      const best_score = Math.max(0, ...Object.values(scores));
+      const best_produkt = Object.entries(scores).sort((a,b)=>b[1]-a[1])[0]?.[0] || PRODUKTE_LIST[0];
+      const tier = best_score >= 78 ? 'A' : best_score >= 62 ? 'B' : best_score >= 40 ? 'C' : 'D';
+      const id = 'c_' + Date.now() + '_' + Math.random().toString(36).slice(2,6) + '_' + added;
+      const lead = {
+        id, firma,
+        plz: clamp(row.plz || '', 10),
+        plz_ort: clamp(row.plz_ort || '', 100),
+        adresse: clamp(row.adresse || '', 200),
+        tel: clamp(row.tel || '', 50), mail: clamp(row.mail || '', 200),
+        web: clamp(row.web || '', 200),
+        kontakt_person: clamp(row.kontakt_person || '', MAX_NAME),
+        branchen: (Array.isArray(row.branchen) ? row.branchen : [row.branchen || '']).map(s => clamp(s,80)).filter(Boolean),
+        bundesland: clamp(row.bundesland || '?', 10),
+        size_label: clamp(row.size_label || '', 50),
+        umsatz_mio: parseFloat(row.umsatz_mio) || 0,
+        lat: null, lng: null,
+        scores, best_score, best_produkt, tier,
+        _custom: true, _added_by: user.id, _added_by_name: user.name, _added_ts: ts,
+        _import_batch: body.batch_name || ts,
+      };
+      await env.KV.put(`custom_lead:${id}`, JSON.stringify(lead));
+      added++;
+    }
+    await env.KV.put(`audit:custom_import:${ts}`, JSON.stringify({
+      action: 'custom_leads_imported', count: added, user: user.id, name: user.name, ts,
+    }), { expirationTtl: 60 * 60 * 24 * 365 });
+    return jsonResponse({ ok: true, added });
+  }
+
+  // DELETE /api/custom-leads/:id — custom lead löschen
+  const customLeadDelMatch = url.pathname.match(/^\/api\/custom-leads\/(c_[^/]+)$/);
+  if (customLeadDelMatch && request.method === 'DELETE') {
+    if (!env.KV) return jsonResponse({ error: 'KV not bound' }, 500);
+    const id = customLeadDelMatch[1];
+    const existing = await env.KV.get(`custom_lead:${id}`);
+    if (!existing) return jsonResponse({ error: 'Nicht gefunden' }, 404);
+    const lead = JSON.parse(existing);
+    if (user.role !== 'admin' && lead._added_by !== user.id)
+      return jsonResponse({ error: 'Nur eigene Firmen oder Admin kann löschen' }, 403);
+    await env.KV.delete(`custom_lead:${id}`);
+    return jsonResponse({ ok: true });
+  }
+
   // === API: GET /api/backup — Sprint 10: Komplettes KV-Export (admin only) ===
   if (url.pathname === '/api/backup' && request.method === 'GET') {
     if (user.role !== 'admin') return jsonResponse({ error: 'Forbidden' }, 403);
