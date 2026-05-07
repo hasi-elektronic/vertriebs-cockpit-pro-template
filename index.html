@@ -2752,8 +2752,7 @@ async function handleImportFile(file) {
 }
 
 function parseCSV(text) {
-  const lines = text.trim().split(/?
-/);
+  const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) { alert('CSV hat keine Daten.'); return; }
   const sep = lines[0].includes(';') ? ';' : ',';
   const headers = lines[0].split(sep).map(h => h.trim().replace(/^["']|["']$/g,''));
